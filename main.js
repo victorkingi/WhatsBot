@@ -39,22 +39,22 @@ client.on('ready', () => {
 });
 
 client.on('message', async msg => {
-    if (msg.author == undefined && config.pmpermit_enabled == "true") { // Pm check for pmpermit module
+    if (msg.author === undefined && config.pmpermit_enabled === "true") { // Pm check for pmpermit module
         var pmpermitcheck = await pmpermit.handler(msg.from.split("@")[0])
         const chat = await msg.getChat();
         if (pmpermitcheck == "permitted") {
             // do nothing
-        } else if (pmpermitcheck.mute == true && chat.isMuted == false) { // mute 
+        } else if (pmpermitcheck.mute === true && chat.isMuted === false) { // mute
             msg.reply(pmpermitcheck.msg)
             const chat = await msg.getChat();
 
-            var unmuteDate = new Date();
+            const unmuteDate = new Date();
             unmuteDate.setSeconds(Number(unmuteDate.getSeconds()) + Number(config.pmpermit_mutetime));
             await chat.mute(unmuteDate)
 
-        } else if (chat.isMuted == true) {
+        } else if (chat.isMuted === true) {
             //do nothing
-        } else if (pmpermitcheck == "error") {
+        } else if (pmpermitcheck === "error") {
             //do nothing
         } else {
             msg.reply(pmpermitcheck.msg)
@@ -63,7 +63,7 @@ client.on('message', async msg => {
     } else {
         if (msg.body.includes("!info")) {
 
-            var startdata = await start.get(await client.info.getBatteryStatus(), client.info.phone)
+            const startdata = await start.get(await client.info.getBatteryStatus(), client.info.phone);
             client.sendMessage(msg.to, new MessageMedia(startdata.mimetype, startdata.data, startdata.filename), { caption: startdata.msg })
 
         }
@@ -73,37 +73,42 @@ client.on('message', async msg => {
 const allricketschedules = {} // Will need later
 
 client.on('message_create', async (msg) => {
+    let getdata;
+    let attachmentData;
+    let quotedMsg;
+    let data;
+    let chat;
     if (msg.fromMe) {
-        if (msg.body == "!allow" && config.pmpermit_enabled == "true" && !msg.to.includes("-")) { // allow and unmute the chat (PMPermit module)
+        if (msg.body === "!allow" && config.pmpermit_enabled === "true" && !msg.to.includes("-")) { // allow and unmute the chat (PMPermit module)
 
             pmpermit.permitacton(msg.to.split("@")[0])
-            var chat = await msg.getChat();
+            chat = await msg.getChat();
             await chat.unmute(true)
             msg.reply("Allowed for PM")
 
-        } else if (msg.body == "!nopm" && config.pmpermit_enabled == "true" && !msg.to.includes("-")) { // not allowed for pm (PMPermit module)
+        } else if (msg.body === "!nopm" && config.pmpermit_enabled === "true" && !msg.to.includes("-")) { // not allowed for pm (PMPermit module)
 
             pmpermit.nopermitacton(msg.to.split("@")[0])
             msg.reply("Not Allowed for PM")
 
-        } else if (msg.body == "!block" && !msg.to.includes("-")) { // Block an user in pm
+        } else if (msg.body === "!block" && !msg.to.includes("-")) { // Block an user in pm
 
-            var chat = await msg.getChat()
-            var contact = await chat.getContact()
+            chat = await msg.getChat();
+            const contact = await chat.getContact();
             msg.reply("You have been Blocked")
             contact.block()
 
-        } else if (msg.body == "!mute" && !msg.to.includes("-")) { // Mute an user in pm
+        } else if (msg.body === "!mute" && !msg.to.includes("-")) { // Mute an user in pm
 
-            var chat = await msg.getChat()
-            var unmuteDate = new Date()
+            chat = await msg.getChat();
+            const unmuteDate = new Date();
             unmuteDate.setSeconds(Number(unmuteDate.getSeconds()) + Number(config.pmpermit_mutetime));
             await chat.mute(unmuteDate)
             msg.reply(`You have been muted for ${config.pmpermit_mutetime / 60} Minutes`)
 
         } else if (msg.body == "!unmute" && !msg.to.includes("-")) { // Unmute an user in pm
 
-            var chat = await msg.getChat();
+            chat = await msg.getChat();
             await chat.unmute(true)
             msg.reply(`You have been unmuted`)
 
@@ -123,22 +128,22 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!help")) { // help module
 
             msg.delete(true)
-            var data = await help.mainF(msg.body)
+            data = await help.mainF(msg.body);
             client.sendMessage(msg.to, data)
 
-        } else if (msg.body == "!ping") { // Ping command
+        } else if (msg.body === "!ping") { // Ping command
 
             msg.reply("Pong !!!");
 
-        } else if (msg.body == "!start") { // Start command
+        } else if (msg.body === "!start") { // Start command
             msg.delete(true)
             var startdata = await start.get(await client.info.getBatteryStatus(), client.info.phone)
             client.sendMessage(msg.to, new MessageMedia(startdata.mimetype, startdata.data, startdata.filename), { caption: startdata.msg })
 
-        } else if (msg.body == '!delete' && msg.hasQuotedMsg) {
+        } else if (msg.body === '!delete' && msg.hasQuotedMsg) {
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
+            quotedMsg = await msg.getQuotedMessage();
             if (quotedMsg.fromMe) {
                 quotedMsg.delete(true);
             } else {
@@ -148,21 +153,21 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!qr ")) { // QR Code Gen
 
             msg.delete(true)
-            var data = await qr.qrgen(msg.body.replace("!qr ", ""));
+            data = await qr.qrgen(msg.body.replace("!qr ", ""));
             client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), { caption: `QR code for 👇\n` + "```" + msg.body.replace("!qr ", "") + "```" });
 
         } else if (msg.body.startsWith("!qr") && msg.hasQuotedMsg) { // QR Code Gen from reply text
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var data = await qr.qrgen(quotedMsg.body);
+            quotedMsg = await msg.getQuotedMessage();
+            data = await qr.qrgen(quotedMsg.body);
             client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), { caption: `QR code for 👇\n` + "```" + quotedMsg.body + "```" });
 
         }  else if (msg.body.startsWith("!jiosaavn ")) { // Jiosaavn Module
 
             msg.delete(true)
-            var data = await saavn.mainF(msg.body.replace("!jiosaavn ", ""));
-            if (data == "error") {
+            data = await saavn.mainF(msg.body.replace("!jiosaavn ", ""));
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch this Jiosaavn Link, Maybe it's a wrong url.```")
             } else {
                 client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), { caption: `🎶 *${data.title}* _(${data.released_year})_\n\n📀 *Artist :*  ` + "```" + data.singers + "```\n📚 *Album :*  " + "```" + data.album + "```" + `\n\n*Download Url* 👇\n${data.url}` });
@@ -171,9 +176,9 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!jiosaavn") && msg.hasQuotedMsg) { // Jiosaavn Module message reply
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var data = await saavn.mainF(quotedMsg.body);
-            if (data == "error") {
+            quotedMsg = await msg.getQuotedMessage();
+            data = await saavn.mainF(quotedMsg.body);
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch this Jiosaavn Link, Maybe it's a wrong url.```")
             } else {
                 client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), { caption: `🎶 *${data.title}* _(${data.released_year})_\n\n📀 *Artist :*  ` + "```" + data.singers + "```\n📚 *Album :*  " + "```" + data.album + "```" + `\n\n*Download Url* 👇\n${data.url}` });
@@ -182,8 +187,8 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!carbon ")) { // Carbon Module
 
             msg.delete(true)
-            var data = await carbon.mainF(msg.body.replace("!carbon ", ""));
-            if (data == "error") {
+            data = await carbon.mainF(msg.body.replace("!carbon ", ""));
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to create the Carbon.```")
             } else {
                 client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), { caption: `Carbon for 👇\n` + "```" + msg.body.replace("!carbon ", "") + "```" });
@@ -192,9 +197,9 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!carbon") && msg.hasQuotedMsg) { // Carbon Module message reply
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var data = await carbon.mainF(quotedMsg.body);
-            if (data == "error") {
+            quotedMsg = await msg.getQuotedMessage();
+            data = await carbon.mainF(quotedMsg.body);
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to create the Carbon.```")
             } else {
                 client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), { caption: `Carbon for 👇\n` + "```" + quotedMsg.body + "```" });
@@ -203,9 +208,9 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!directlink") && msg.hasQuotedMsg) { // Telegraph Module
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var attachmentData = await quotedMsg.downloadMedia();
-            var data = await telegraph.mainF(attachmentData);
+            quotedMsg = await msg.getQuotedMessage();
+            attachmentData = await quotedMsg.downloadMedia();
+            data = await telegraph.mainF(attachmentData);
             if (data == "error") {
                 quotedMsg.reply(`Error occured while create direct link.`)
             } else {
@@ -215,7 +220,7 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!yt ")) { // Youtube Module
 
             msg.delete(true)
-            var data = await youtube.mainF(msg.body.replace("!yt ", ""));
+            data = await youtube.mainF(msg.body.replace("!yt ", ""));
             if (data == "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch the YouTube video```")
             } else {
@@ -225,9 +230,9 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!yt") && msg.hasQuotedMsg) { // Youtube Module Reply
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var data = await youtube.mainF(quotedMsg.body);
-            if (data == "error") {
+            quotedMsg = await msg.getQuotedMessage();
+            data = await youtube.mainF(quotedMsg.body);
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch the YouTube video```")
             } else {
                 client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), { caption: `*${data.title}*\n\nViews: ` + "```" + data.views + "```\nLikes: " + "```" + data.likes + "```\nComments: " + "```" + data.comments + "```\n\n*Download Link* 👇\n" + "```" + data.download_link + "```" });
@@ -236,8 +241,8 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!weather ")) { // Weather Module
 
             msg.delete(true)
-            var data = await weather.mainF(msg.body.replace("!weather ", ""));
-            if (data == "error") {
+            data = await weather.mainF(msg.body.replace("!weather ", ""));
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch Weather```")
             } else {
                 client.sendMessage(msg.to, `*Today's Weather at ${data.place}*\n` + "```" + data.current_observation.text + " (" + data.current_observation.temperature + "°C)```\n\n*Type:* " + "```" + data.today_forcast.text + "```\n*Max temperature:* " + "```" + data.today_forcast.high + "°C```\n*Min temperature:* " + "```" + data.today_forcast.low + "°C```");
@@ -246,9 +251,9 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!tr") && msg.hasQuotedMsg) { // Translator Module reply
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage()
-            var data = await translator.argu(quotedMsg.body, msg.body)
-            if (data == "error") {
+            quotedMsg = await msg.getQuotedMessage();
+            data = await translator.argu(quotedMsg.body, msg.body);
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while translate```")
             } else {
                 client.sendMessage(msg.to, `*Original (${data.ori_lang}) :* ` + "```" + data.original + "```\n\n" + `*Translation (${data.trans_lang}) :* ` + "```" + data.translated + "```")
@@ -257,8 +262,8 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!tr")) { // Translator Module
 
             msg.delete(true)
-            var data = await translator.single(msg.body)
-            if (data == "error") {
+            data = await translator.single(msg.body);
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while translate```")
             } else {
                 client.sendMessage(msg.to, `*Original (${data.ori_lang}) :* ` + "```" + data.original + "```\n\n" + `*Translation (${data.trans_lang}) :* ` + "```" + data.translated + "```")
@@ -267,8 +272,8 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!ud ")) { // Urban Dictionary Module
 
             msg.delete(true)
-            var data = await ud.mainF(msg.body.replace("!ud ", ""))
-            if (data == "error") {
+            data = await ud.mainF(msg.body.replace("!ud ", ""));
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while Lookup on Urban Dictionary```")
             } else {
                 client.sendMessage(msg.to, "*Term:* ```" + data.term + "```\n\n" + "*Definition:* ```" + data.def + "```\n\n" + "*Example:* ```" + data.example + "```")
@@ -276,19 +281,19 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!sticker") && msg.hasQuotedMsg) { // Sticker Module
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
+            quotedMsg = await msg.getQuotedMessage();
             if (quotedMsg.hasMedia) {
-                var attachmentData = await quotedMsg.downloadMedia();
+                attachmentData = await quotedMsg.downloadMedia();
                 client.sendMessage(msg.to, new MessageMedia(attachmentData.mimetype, attachmentData.data, attachmentData.filename), { sendMediaAsSticker: true });
             } else {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```No image found to make a Sticker```")
             }
-        } else if (msg.body == "!awake") {
+        } else if (msg.body === "!awake") {
             client.sendPresenceAvailable()
             msg.reply("```" + "I will be online from now." + "```")
         } else if (msg.body.startsWith('!git ')) { // Gitinfo Module with link
             msg.delete(true)
-            var data = await gitinfo.detail(msg.body.replace('!git ', ''))
+            data = await gitinfo.detail(msg.body.replace('!git ', ''));
             if (data.status) {
                 if (data.data.status) {
                     await client.sendMessage(msg.to, new MessageMedia(data.data.mimetype, data.data.data, data.data.filename))
@@ -337,7 +342,7 @@ client.on('message_create', async (msg) => {
             msg.delete(true)
             var i, count
             if (msg.hasQuotedMsg) {
-                var quotedMsg = await msg.getQuotedMessage()
+                quotedMsg = await msg.getQuotedMessage();
                 count = msg.body.replace("!spam ", "")
                 if (isNaN(count)) {
                     client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Invalid count```")
@@ -386,25 +391,25 @@ client.on('message_create', async (msg) => {
         }
         else if (msg.body.startsWith("!crypto ")) {
             msg.delete(true)
-            var data = await crypto.getPrice(msg.body.replace("!crypto ", ""));
-            if (data == "error") {
+            data = await crypto.getPrice(msg.body.replace("!crypto ", ""));
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
             }
-            if (data == "unsupported") {
+            if (data === "unsupported") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
             }
             else {
-                var date = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
+                const date = new Date().toLocaleString('en-US', {timeZone: 'Asia/Kolkata'});
                 client.sendMessage(msg.to, `Price of *${data.name}* as of ${date} is *₹ ${data.price}*`);
             }
         }
         else if (msg.body.startsWith("!watch ")) { // Watch Module
             msg.delete(true)
-            var data = await watch.getDetails(msg.body.replace("!watch ", ""));
-            if (data == "error") {
+            data = await watch.getDetails(msg.body.replace("!watch ", ""));
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while fetching Movie/TV Show Details.```")
             }
-            else if (data == "No Results") {
+            else if (data === "No Results") {
                 client.sendMessage(msg.to, `🙇‍♂️ *No Results Found!*\n\n` + "```Please check the name of Movie/TV Show you have entered.```")
             }
             else {
@@ -414,8 +419,8 @@ client.on('message_create', async (msg) => {
         }
         else if (msg.body.startsWith("!shorten ")) { // URL Shortener Module
             msg.delete(true)
-            var data = await shorten.getShortURL(msg.body.replace("!shorten ", ""));
-            if (data == "error") {
+            data = await shorten.getShortURL(msg.body.replace("!shorten ", ""));
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Please make sure the entered URL is in correct format.```")
             }
             else {
@@ -425,9 +430,9 @@ client.on('message_create', async (msg) => {
         else if (msg.body.startsWith("!shorten") && msg.hasQuotedMsg) { // URL Shortener Module Reply
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var data = await shorten.getShortURL(quotedMsg.body);
-            if (data == "error") {
+            quotedMsg = await msg.getQuotedMessage();
+            data = await shorten.getShortURL(quotedMsg.body);
+            if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Please make sure the entered URL is in correct format.```")
             }
             else {
@@ -437,28 +442,28 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!ocr") && msg.hasQuotedMsg) { // OCR Module
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var attachmentData = await quotedMsg.downloadMedia();
-            var data = await ocr.readImage(attachmentData);
-            if (data == "error") {
+            quotedMsg = await msg.getQuotedMessage();
+            attachmentData = await quotedMsg.downloadMedia();
+            data = await ocr.readImage(attachmentData);
+            if (data === "error") {
                 quotedMsg.reply(`Error occured while reading the image. Please make sure the image is clear.`)
             } else {
                 quotedMsg.reply(`*Extracted Text from the Image*  👇\n\n${data.parsedText}`)
             }
         } else if (msg.body.startsWith("!emailverifier") && msg.hasQuotedMsg) { // Email Verifier Module Reply
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var getdata = await emailVerifier(quotedMsg.body)
+            quotedMsg = await msg.getQuotedMessage();
+            getdata = await emailVerifier(quotedMsg.body);
             quotedMsg.reply(getdata)
         } else if (msg.body.startsWith("!emailverifier ")) { // Email Verifier Module
             msg.delete(true)
-            var getdata = await emailVerifier(msg.body.replace('!emailverifier ', ''))
+            getdata = await emailVerifier(msg.body.replace('!emailverifier ', ''));
             client.sendMessage(msg.to, getdata);
         } else if (msg.body.startsWith("!song ")) { // Song downloader Module
 
             msg.delete(true)
-            var getdata = await songM.search(msg.body.replace('!song ', ''))
-            var sendmessage = await client.sendMessage(msg.to, getdata.content); // have to grab the message ID 
+            getdata = await songM.search(msg.body.replace('!song ', ''));
+            const sendmessage = await client.sendMessage(msg.to, getdata.content); // have to grab the message ID
             if (getdata.status) {
                 fs.writeFileSync(`${__dirname}/modules/tempdata/song~${sendmessage.id.id}.json`, JSON.stringify(getdata.songarray))
             }
@@ -466,8 +471,8 @@ client.on('message_create', async (msg) => {
         } else if (msg.body.startsWith("!dldsong ") && msg.hasQuotedMsg) { // Downloader Module (song)
 
             msg.delete(true)
-            var quotedMsg = await msg.getQuotedMessage();
-            var getdata = await songM.download(msg.body.replace('!dldsong ', ''), quotedMsg.id.id)
+            quotedMsg = await msg.getQuotedMessage();
+            getdata = await songM.download(msg.body.replace('!dldsong ', ''), quotedMsg.id.id);
             if (getdata.status) {
                 client.sendMessage(msg.to, new MessageMedia(getdata.content.image.mimetype, getdata.content.image.data, getdata.content.image.filename), { caption: getdata.content.text });
             } else {
@@ -479,7 +484,7 @@ client.on('message_create', async (msg) => {
 
 client.on('message_revoke_everyone', async (after, before) => {
     if (before) {
-        if (before.fromMe !== true && before.hasMedia !== true && before.author == undefined && config.enable_delete_alert == "true") {
+        if (before.fromMe !== true && before.hasMedia !== true && before.author === undefined && config.enable_delete_alert === "true") {
             client.sendMessage(before.from, "_You deleted this message_ 👇👇\n\n" + before.body)
         }
     }

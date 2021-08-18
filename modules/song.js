@@ -29,14 +29,14 @@ async function search(query) {
 }
 
 async function download(songkey, id) {
-    var pretifiedsongkey = Number(songkey.trim())
+    const pretifiedsongkey = Number(songkey.trim());
     try {
-        var saveddata = JSON.parse(fs.readFileSync(`${__dirname}/tempdata/song~${id}.json`, "utf8"));
-        var song = saveddata.find(d => d.key === pretifiedsongkey)
+        const saveddata = JSON.parse(fs.readFileSync(`${__dirname}/tempdata/song~${id}.json`, "utf8"));
+        const song = saveddata.find(d => d.key === pretifiedsongkey);
 
         if (song) {
             try {
-                var data = (
+                const data = (
                     await axios.get(`https://jiosaavn-api.vercel.app/song?id=${song.id}`)
                 ).data;
 
@@ -70,7 +70,7 @@ async function download(songkey, id) {
 
 async function image(link) {
     try {
-        var respoimage = await axios.get(link, { responseType: 'arraybuffer' });
+        const respoimage = await axios.get(link, {responseType: 'arraybuffer'});
 
         return ({
             mimetype: "image/jpeg",
