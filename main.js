@@ -42,7 +42,7 @@ client.on('message', async msg => {
     if (msg.author === undefined && config.pmpermit_enabled === "true") { // Pm check for pmpermit module
         var pmpermitcheck = await pmpermit.handler(msg.from.split("@")[0])
         const chat = await msg.getChat();
-        if (pmpermitcheck == "permitted") {
+        if (pmpermitcheck === "permitted") {
             // do nothing
         } else if (pmpermitcheck.mute === true && chat.isMuted === false) { // mute
             msg.reply(pmpermitcheck.msg)
