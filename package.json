@@ -30,6 +30,7 @@
         "mime-to-extensions": "^1.0.2",
         "mongodb": "^3.6.3",
         "node-cron": "^3.0.0",
+        "numeral": "^2.0.6",
         "ocr-space-api-wrapper": "^1.0.6",
         "qr-image": "^3.2.0",
         "qrcode-svg": "^1.1.0",

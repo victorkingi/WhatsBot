@@ -24,7 +24,9 @@ const shorten = require('./modules/urlshortner');
 const ocr = require('./modules/ocr');
 const emailVerifier = require('./modules/emailverifier');
 const songM = require('./modules/song');
+const numeral = require('numeral');
 const fs = require('fs');
+let lastRecorded = { price1: 3138.45, price2: 4409.59 };
 
 const client = new Client({ puppeteer: { headless: true, args: ['--no-sandbox'] }, session: config.session });
 
@@ -78,6 +80,7 @@ client.on('message_create', async (msg) => {
     let quotedMsg;
     let data;
     let chat;
+    console.log(msg);
     if (msg.fromMe) {
         if (msg.body === "!allow" && config.pmpermit_enabled === "true" && !msg.to.includes("-")) { // allow and unmute the chat (PMPermit module)
 
@@ -106,7 +109,7 @@ client.on('message_create', async (msg) => {
             await chat.mute(unmuteDate)
             msg.reply(`You have been muted for ${config.pmpermit_mutetime / 60} Minutes`)
 
-        } else if (msg.body == "!unmute" && !msg.to.includes("-")) { // Unmute an user in pm
+        } else if (msg.body === "!unmute" && !msg.to.includes("-")) { // Unmute an user in pm
 
             chat = await msg.getChat();
             await chat.unmute(true)
@@ -389,9 +392,47 @@ client.on('message_create', async (msg) => {
                     client.sendMessage(msg.to, text)
             }
         }
-        else if (msg.body.startsWith("!crypto ")) {
-            msg.delete(true)
-            data = await crypto.getPrice(msg.body.replace("!crypto ", ""));
+        else if (msg.body === "!portfolio") {
+            msg.delete(true);
+            const initiatorTo = msg.to.split('@');
+            const initiatorFrom = msg.from.split('@');
+            const checkInitiator = (!initiatorTo[0].startsWith('254722489882')
+                && !initiatorTo[0].startsWith('254712054049')
+                && !initiatorTo[0].startsWith('254701004363'))
+                && (!initiatorFrom[0].startsWith('254722489882')
+                && !initiatorFrom[0].startsWith('254712054049')
+                && !initiatorFrom[0].startsWith('254701004363'));
+
+            if (checkInitiator) return client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Not authorized to execute this command```");
+            const allCoins = [
+                { n: 'ETH', amount: 0.7576 },
+                { n: 'VET', amount: 1167 },
+                { n: 'ADA', amount: 74.73 },
+                { n: 'XRP', amount: 156.24 },
+                { n: 'SOL', amount: 2.6287538 },
+                { n: 'RVN', amount: 899 }];
+            const extraCoin = [
+                { n: 'XRP', amount: 3785.704313 }
+            ];
+            const cumulate = [];
+            for (const coin of allCoins) {
+                data = await crypto.getPrice(coin.n);
+                if (data === "error") {
+                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
+                }
+                if (data === "unsupported") {
+                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
+                }
+                else {
+                    cumulate.push({
+                        coin,
+                        name: data.name,
+                        price: data.price
+                    });
+                }
+            }
+            let finalExtra = {};
+            data = await crypto.getPrice(extraCoin[0].n);
             if (data === "error") {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
             }
@@ -399,9 +440,36 @@ client.on('message_create', async (msg) => {
                 client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
             }
             else {
-                const date = new Date().toLocaleString('en-US', {timeZone: 'Asia/Kolkata'});
-                client.sendMessage(msg.to, `Price of *${data.name}* as of ${date} is *₹ ${data.price}*`);
+                finalExtra = {
+                    coin: extraCoin[0],
+                    name: data.name,
+                    price: data.price
+                };
             }
+            let total = 0;
+            let total2 = parseFloat(finalExtra.price) * parseFloat(finalExtra.coin.amount);
+            for (const coin of cumulate) {
+                const added = parseFloat(coin.price) * parseFloat(coin.coin.amount);
+                total += added;
+            }
+            const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
+            if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
+                client.sendMessage(msg.to, `1) *XRP, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+                client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+            } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
+                client.sendMessage(msg.to, `1) *XRP, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+                client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+            } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
+                client.sendMessage(msg.to, `1) *XRP, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+                client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+            } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
+                client.sendMessage(msg.to, `1) *XRP, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+                client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+            } else {
+                client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
+            }
+            lastRecorded.price1 = total;
+            lastRecorded.price2 = total2;
         }
         else if (msg.body.startsWith("!watch ")) { // Watch Module
             msg.delete(true)
@@ -480,12 +548,91 @@ client.on('message_create', async (msg) => {
             }
         }
     }
+    else if (msg.body === "!portfolio") {
+        await msg.delete(true);
+        const initiatorTo = msg.to.split('@');
+        const initiatorFrom = msg.from.split('@');
+        const checkInitiator = (!initiatorTo[0].startsWith('254722489882')
+            && !initiatorTo[0].startsWith('254712054049')
+            && !initiatorTo[0].startsWith('254701004363'))
+            && (!initiatorFrom[0].startsWith('254722489882')
+                && !initiatorFrom[0].startsWith('254712054049')
+                && !initiatorFrom[0].startsWith('254701004363'));
+
+        if (checkInitiator) return client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Not authorized to execute this command```");
+        const allCoins = [
+            { n: 'ETH', amount: 0.7576 },
+            { n: 'VET', amount: 1167 },
+            { n: 'ADA', amount: 74.73 },
+            { n: 'XRP', amount: 156.24 },
+            { n: 'SOL', amount: 2.6287538 },
+            { n: 'RVN', amount: 899 }];
+        const extraCoin = [
+            { n: 'XRP', amount: 3785.704313 }
+        ];
+        const cumulate = [];
+        for (const coin of allCoins) {
+            data = await crypto.getPrice(coin.n);
+            if (data === "error") {
+                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
+            }
+            if (data === "unsupported") {
+                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
+            }
+            else {
+                cumulate.push({
+                    coin,
+                    name: data.name,
+                    price: data.price
+                });
+            }
+        }
+        let finalExtra = {};
+        data = await crypto.getPrice(extraCoin[0].n);
+        if (data === "error") {
+            client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
+        }
+        if (data === "unsupported") {
+            client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
+        }
+        else {
+            finalExtra = {
+                coin: extraCoin[0],
+                name: data.name,
+                price: data.price
+            };
+        }
+        let total = 0;
+        let total2 = parseFloat(finalExtra.price) * parseFloat(finalExtra.coin.amount);
+        for (const coin of cumulate) {
+            const added = parseFloat(coin.price) * parseFloat(coin.coin.amount);
+            total += added;
+        }
+        const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
+        if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
+            client.sendMessage(msg.from, `1) *XRP, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+            client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+        } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
+            client.sendMessage(msg.from, `1) *XRP, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+            client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+        } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
+            client.sendMessage(msg.from, `1) *XRP, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+            client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+        } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
+            client.sendMessage(msg.from, `1) *XRP, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+            client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+        } else {
+            client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
+        }
+        lastRecorded.price1 = total;
+        lastRecorded.price2 = total2;
+    }
 });
 
 client.on('message_revoke_everyone', async (after, before) => {
     if (before) {
         if (before.fromMe !== true && before.hasMedia !== true && before.author === undefined && config.enable_delete_alert === "true") {
-            client.sendMessage(before.from, "_You deleted this message_ 👇👇\n\n" + before.body)
+            //client.sendMessage(before.from, "_You deleted this message_ 👇👇\n\n" + before.body)
         }
     }
 });
