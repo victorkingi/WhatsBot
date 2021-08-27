@@ -26,7 +26,7 @@ const emailVerifier = require('./modules/emailverifier');
 const songM = require('./modules/song');
 const numeral = require('numeral');
 const fs = require('fs');
-fs.readFile('current.txt', (err, data) => {
+fs.readFile(`${__dirname}/current.txt`, (err, data) => {
     if (err) throw new Error("Error writing values: "+err);
     const last  = data.toString().split(',');
     let lastRecorded = { price1: parseFloat(last[0]), price2: parseFloat(last[1]) };
@@ -473,7 +473,7 @@ fs.readFile('current.txt', (err, data) => {
                 }
                 lastRecorded.price1 = total;
                 lastRecorded.price2 = total2;
-                fs.writeFile('current.txt', `${lastRecorded.price1},${lastRecorded.price2}`, (err) => {
+                fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2}`, (err) => {
                     if (err) throw new Error("Error writing values: " + err);
                     console.log("updated");
                 });
@@ -623,7 +623,7 @@ fs.readFile('current.txt', (err, data) => {
             }
             lastRecorded.price1 = total;
             lastRecorded.price2 = total2;
-            fs.writeFile('current.txt', `${lastRecorded.price1},${lastRecorded.price2}`, (err) => {
+            fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2}`, (err) => {
                 if (err) throw new Error("Error writing values: " + err);
                 console.log("updated");
             });
