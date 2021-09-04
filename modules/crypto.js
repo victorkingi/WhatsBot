@@ -1,29 +1,27 @@
-// Coded by Sumanjay (https://github.com/cyberboysumanjay)
-const axios = require('axios');
+const rp = require("request-promise");
 
-async function getPrice(cryptoCode) {
-    cryptoCode = cryptoCode.toUpperCase()
-    const mainconfig = {
-        method: 'get',
-        url: 'https://public.coindcx.com/market_data/current_prices'
+async function getPrice(cryptoCode, amount) {
+    const requestOptions = {
+        method: 'GET',
+        uri: 'https://pro-api.coinmarketcap.com/v1/tools/price-conversion',
+        qs: {
+            'amount': amount,
+            'symbol': cryptoCode,
+            'convert': 'USD'
+        },
+        headers: {
+            'X-CMC_PRO_API_KEY': '3e099a74-1a4b-4a6a-9092-190ae777739e'
+        },
+        json: true,
+        gzip: true
     };
-    return axios(mainconfig)
-        .then(async function (response) {
-            const data = response.data;
-            const cryptoCodeINR = cryptoCode + "USDT";
-            if (data[cryptoCode] !== undefined || data[cryptoCodeINR] !== undefined) {
-                cryptoCode = data[cryptoCode] === undefined ? cryptoCodeINR : cryptoCode
-                return ({
-                    name: cryptoCode,
-                    price: data[cryptoCode]
-                })
-            } else {
-                return "unsupported"
-            }
-        })
-        .catch(function (error) {
-            return "error"
-        })
+
+    const response = await rp(requestOptions);
+    if (response.status.error_code !== 0) return 'unsupported';
+    return ({
+        name: response.data.symbol,
+        price: response.data.quote.USD.price
+    });
 }
 
 module.exports = {

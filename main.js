@@ -412,9 +412,10 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 const allCoins = [
                     {n: 'ETH', amount: 0.7576},
                     {n: 'VET', amount: 1167},
-                    {n: 'ADA', amount: 74.73},
+                    {n: 'ADA', amount: 54.561815},
                     {n: 'XRP', amount: 156.24},
                     {n: 'SOL', amount: 2.6287538},
+                    {n: 'XDC', amount: 380},
                     {n: 'RVN', amount: 899}];
                 const extraCoin = [
                     {n: 'XRP', amount: 3785.704313}
@@ -423,10 +424,12 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 for (const coin of allCoins) {
                     data = await crypto.getPrice(coin.n);
                     if (data === "error") {
-                        client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
+                        client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                        return -1;
                     }
                     if (data === "unsupported") {
-                        client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
+                        client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+                        return -2;
                     } else {
                         cumulate.push({
                             coin,
@@ -438,10 +441,12 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 let finalExtra = {};
                 data = await crypto.getPrice(extraCoin[0].n);
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
+                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                    return -1;
                 }
                 if (data === "unsupported") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
+                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+                    return -2;
                 } else {
                     finalExtra = {
                         coin: extraCoin[0],
@@ -450,9 +455,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     };
                 }
                 let total = 0;
-                let total2 = parseFloat(finalExtra.price) * parseFloat(finalExtra.coin.amount);
+                let total2 = parseFloat(finalExtra.price);
                 for (const coin of cumulate) {
-                    const added = parseFloat(coin.price) * parseFloat(coin.coin.amount);
+                    const added = parseFloat(coin.price);
                     total += added;
                 }
                 const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
@@ -562,9 +567,10 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
             const allCoins = [
                 {n: 'ETH', amount: 0.7576},
                 {n: 'VET', amount: 1167},
-                {n: 'ADA', amount: 74.73},
+                {n: 'ADA', amount: 54.561815},
                 {n: 'XRP', amount: 156.24},
                 {n: 'SOL', amount: 2.6287538},
+                {n: 'XDC', amount: 380},
                 {n: 'RVN', amount: 899}];
             const extraCoin = [
                 {n: 'XRP', amount: 3785.704313}
@@ -573,10 +579,12 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
             for (const coin of allCoins) {
                 data = await crypto.getPrice(coin.n);
                 if (data === "error") {
-                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
+                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                    return -1;
                 }
                 if (data === "unsupported") {
-                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
+                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+                    return -2;
                 } else {
                     cumulate.push({
                         coin,
@@ -588,10 +596,12 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
             let finalExtra = {};
             data = await crypto.getPrice(extraCoin[0].n);
             if (data === "error") {
-                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```")
+                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                return -1;
             }
             if (data === "unsupported") {
-                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```")
+                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+                return -2;
             } else {
                 finalExtra = {
                     coin: extraCoin[0],
@@ -600,9 +610,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 };
             }
             let total = 0;
-            let total2 = parseFloat(finalExtra.price) * parseFloat(finalExtra.coin.amount);
+            let total2 = parseFloat(finalExtra.price);
             for (const coin of cumulate) {
-                const added = parseFloat(coin.price) * parseFloat(coin.coin.amount);
+                const added = parseFloat(coin.price);
                 total += added;
             }
             const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
