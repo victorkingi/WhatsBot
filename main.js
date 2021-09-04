@@ -410,19 +410,19 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
 
                 if (checkInitiator) return client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Not authorized to execute this command```");
                 const allCoins = [
-                    {n: 'ETH', amount: 0.7576},
-                    {n: 'VET', amount: 1167},
-                    {n: 'ADA', amount: 54.561815},
-                    {n: 'XRP', amount: 156.24},
-                    {n: 'SOL', amount: 2.6287538},
-                    {n: 'XDC', amount: 380},
-                    {n: 'RVN', amount: 899}];
+                    {n: 'ETH', amount: '0.7576'},
+                    {n: 'VET', amount: '1167'},
+                    {n: 'ADA', amount: '54.561815'},
+                    {n: 'XRP', amount: '156.24'},
+                    {n: 'SOL', amount: '2.6287538'},
+                    {n: 'XDC', amount: '380'},
+                    {n: 'RVN', amount: '899'}];
                 const extraCoin = [
-                    {n: 'XRP', amount: 3785.704313}
+                    {n: 'XRP', amount: '3785.704313'}
                 ];
                 const cumulate = [];
                 for (const coin of allCoins) {
-                    data = await crypto.getPrice(coin.n);
+                    data = await crypto.getPrice(coin.n, coin.amount);
                     if (data === "error") {
                         client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                         return -1;
@@ -439,7 +439,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     }
                 }
                 let finalExtra = {};
-                data = await crypto.getPrice(extraCoin[0].n);
+                data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
                 if (data === "error") {
                     client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                     return -1;
@@ -565,19 +565,19 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
 
             if (checkInitiator) return client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Not authorized to execute this command```");
             const allCoins = [
-                {n: 'ETH', amount: 0.7576},
-                {n: 'VET', amount: 1167},
-                {n: 'ADA', amount: 54.561815},
-                {n: 'XRP', amount: 156.24},
-                {n: 'SOL', amount: 2.6287538},
-                {n: 'XDC', amount: 380},
-                {n: 'RVN', amount: 899}];
+                {n: 'ETH', amount: '0.7576'},
+                {n: 'VET', amount: '1167'},
+                {n: 'ADA', amount: '54.561815'},
+                {n: 'XRP', amount: '156.24'},
+                {n: 'SOL', amount: '2.6287538'},
+                {n: 'XDC', amount: '380'},
+                {n: 'RVN', amount: '899'}];
             const extraCoin = [
-                {n: 'XRP', amount: 3785.704313}
+                {n: 'XRP', amount: '3785.704313'}
             ];
             const cumulate = [];
             for (const coin of allCoins) {
-                data = await crypto.getPrice(coin.n);
+                data = await crypto.getPrice(coin.n, coin.amount);
                 if (data === "error") {
                     client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                     return -1;
@@ -594,7 +594,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 }
             }
             let finalExtra = {};
-            data = await crypto.getPrice(extraCoin[0].n);
+            data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
             if (data === "error") {
                 client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                 return -1;
