@@ -424,8 +424,10 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     {n: 'XRP', amount: '3785.704313'}
                 ];
                 const cumulate = [];
+                console.log("getting data...");
                 for (const coin of allCoins) {
                     data = await crypto.getPrice(coin.n, coin.amount);
+                    console.log("received...", data);
                     if (data === "error") {
                         client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                         return -1;
@@ -443,6 +445,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 }
                 let finalExtra = {};
                 data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
+                console.log("received FINAL...", data);
                 if (data === "error") {
                     client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                     return -1;
@@ -463,6 +466,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     const added = parseFloat(coin.price);
                     total += added;
                 }
+                console.log("FINAL TOTAL...", total, total2);
                 const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
                 if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
                     client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
