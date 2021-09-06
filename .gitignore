@@ -12,3 +12,6 @@ session.json
 .cache/
 .idea/
 yarn.lock
+current.txt
+start_whatsbot.sh
+
