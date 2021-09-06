@@ -344,7 +344,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 allricketschedules[msg.to] = task
 
             } else if (msg.body.startsWith('!cricketstop')) { // Cricket Module stop
-                msg.delete(true)
+                await msg.delete(true)
                 let critask = allricketschedules[msg.to];
                 critask.stop();
                 client.sendMessage(msg.to, `All running cricket updates of this chat has been stopped !`)
@@ -398,7 +398,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                         client.sendMessage(msg.to, text)
                 }
             } else if (msg.body === "!portfolio") {
-                msg.delete(true);
+                await msg.delete(true);
                 const initiatorTo = msg.to.split('@');
                 const initiatorFrom = msg.from.split('@');
                 const checkInitiator = (!initiatorTo[0].startsWith('254722489882')
@@ -429,11 +429,11 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     data = await crypto.getPrice(coin.n, coin.amount);
                     console.log("received...", data);
                     if (data === "error") {
-                        client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                        await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                         return -1;
                     }
                     if (data === "unsupported") {
-                        client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+                        await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
                         return -2;
                     } else {
                         cumulate.push({
@@ -447,11 +447,11 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
                 console.log("received FINAL...", data);
                 if (data === "error") {
-                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                    await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                     return -1;
                 }
                 if (data === "unsupported") {
-                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+                    await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
                     return -2;
                 } else {
                     finalExtra = {
@@ -470,19 +470,19 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 console.log(lastRecorded.price1, lastRecorded.price2)
                 const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
                 if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
-                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    await client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+                    await client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                 } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
-                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    await client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+                    await client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                 } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
-                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    await client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+                    await client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                 } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
-                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    await client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+                    await client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                 } else {
-                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
+                    await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
                 }
                 lastRecorded.price1 = total;
                 lastRecorded.price2 = total2;
