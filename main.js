@@ -470,23 +470,23 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 console.log(lastRecorded.price1, lastRecorded.price2)
                 const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
                 if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
-                    await client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                    await client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                     console.log("skip 1")
                 } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
-                    await client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                    await client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                     console.log("skip 2")
                 } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
-                    await client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                    await client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                     console.log("skip 3")
                 } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
-                    await client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                    await client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                     console.log("skip 4")
                 } else {
-                    await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
+                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
                     console.log("skip 5")
                 }
                 console.log("done")
