@@ -467,6 +467,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     total += added;
                 }
                 console.log("FINAL TOTAL...", total, total2);
+                console.log(lastRecorded.price1, lastRecorded.price2)
                 const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
                 if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
                     client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
