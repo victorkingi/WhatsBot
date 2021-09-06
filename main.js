@@ -429,11 +429,11 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     data = await crypto.getPrice(coin.n, coin.amount);
                     console.log("received...", data);
                     if (data === "error") {
-                        await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                        await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                         return -1;
                     }
                     if (data === "unsupported") {
-                        await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+                        await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
                         return -2;
                     } else {
                         cumulate.push({
@@ -447,11 +447,11 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
                 console.log("received FINAL...", data);
                 if (data === "error") {
-                    await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
                     return -1;
                 }
                 if (data === "unsupported") {
-                    await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
                     return -2;
                 } else {
                     finalExtra = {
@@ -470,23 +470,23 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 console.log(lastRecorded.price1, lastRecorded.price2)
                 const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
                 if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
-                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    client.sendMessage(msg.to, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+                    client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                     console.log("skip 1")
                 } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
-                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    client.sendMessage(msg.to, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+                    client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                     console.log("skip 2")
                 } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
-                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    client.sendMessage(msg.to, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+                    client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                     console.log("skip 3")
                 } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
-                    client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                    client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
+                    client.sendMessage(msg.to, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+                    client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
                     console.log("skip 4")
                 } else {
-                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
+                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
                     console.log("skip 5")
                 }
                 console.log("done")
@@ -566,7 +566,8 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     client.sendMessage(msg.to, getdata.content);
                 }
             }
-        } else if (msg.body === "!portfolio") {
+        }
+        else if (msg.body === "!portfolio") {
             await msg.delete(true);
             const initiatorTo = msg.to.split('@');
             const initiatorFrom = msg.from.split('@');
