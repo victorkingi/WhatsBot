@@ -26,6 +26,199 @@ const emailVerifier = require('./modules/emailverifier');
 const songM = require('./modules/song');
 const numeral = require('numeral');
 const fs = require('fs');
+
+const allCoins = [
+    {n: 'ETH', amount: '0.497305355757638186'},
+    {n: 'VET', amount: '1176.9'},
+    {n: 'ADA', amount: '54.561815'},
+    {n: 'XRP', amount: '110.984987'},
+    {n: 'SOL', amount: '1.6187388'},
+    {n: 'XDC', amount: '380'},
+    {n: 'ALBT', amount: '43.99'},
+    {n: 'VXV', amount: '3.8663'},
+    {n: 'QNT', amount: '2.142'},
+    {n: 'RVN', amount: '899'}];
+const extraCoin = [
+    {n: 'XRP', amount: '3765.704313'}
+];
+
+function decodeInput(body) {
+    let commands = body.split(' ');
+    if (commands[0] !== "!portfolio") return -1;
+    if(commands.length === 1) return 0;
+    if (commands.length === 2) {
+        let toDo = commands[1];
+        if (toDo === "-c") return 1;
+        if (toDo === "-a") return 2;
+        if (toDo === "-l") return 3;
+    } else {
+        if (commands[commands.length-1] === '') {
+            let toDo = commands[1];
+            if (toDo === "-c") return 1;
+            if (toDo === "-a") return 2;
+            if (toDo === "-l") return 3;
+        }
+    }
+    return -2;
+}
+
+/**
+ *
+ * @param client
+ * @param msg
+ * @param lastRecorded
+ * @param isMe
+ * @returns {Promise<number>}
+ */
+async function getAllData(client, msg, lastRecorded, isMe) {
+    let data;
+    const cumulate = [];
+    for (const coin of allCoins) {
+        data = await crypto.getPrice(coin.n, coin.amount);
+        console.log(data);
+        if (data === "error") {
+            await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+            return -1;
+        }
+        if (data === "unsupported") {
+            await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+            return -2;
+        } else {
+            cumulate.push({
+                coin,
+                name: data.name,
+                price: data.price
+            });
+        }
+    }
+    let finalExtra = {};
+    data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
+    if (data === "error") {
+        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+        return -1;
+    }
+    if (data === "unsupported") {
+        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+        return -2;
+    } else {
+        finalExtra = {
+            coin: extraCoin[0],
+            name: data.name,
+            price: data.price
+        };
+    }
+    let total = 0;
+    let total2 = parseFloat(finalExtra.price);
+    for (const coin of cumulate) {
+        const added = parseFloat(coin.price);
+        total += added;
+    }
+    const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
+    if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
+        await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+      } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
+        await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+   } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
+        await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
+     } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
+        await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
+    } else {
+        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
+    }
+    await client.sendMessage(isMe ? msg.to : msg.from, "Other commands:\n*!portfolio -c* : View all coin amounts and prices\n*!portfolio -a* : view all addresses\n*!portfolio -l* : view location coin is stored");
+    console.log("done sending");
+    lastRecorded.price1 = total;
+    lastRecorded.price2 = total2;
+    fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2}`, (err) => {
+        if (err) throw new Error("Error writing values: " + err);
+        console.log("updated");
+    });
+    return 0;
+}
+
+/**
+ * posts message containing all coins, value and amount
+ * @param client
+ * @param msg
+ * @param lastRecorded
+ * @param isMe
+ * @returns {Promise<number>}
+ */
+async function getCoins(client, msg, lastRecorded, isMe) {
+    let data;
+    const cumulate = [];
+    console.log("Getting coins...")
+    for (const coin of allCoins) {
+        data = await crypto.getPrice(coin.n, coin.amount);
+        if (data === "error") {
+            await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+            return -1;
+        }
+        if (data === "unsupported") {
+            await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+            return -2;
+        } else {
+            cumulate.push({
+                coin,
+                name: data.name,
+                price: data.price,
+                value: data.value
+            });
+        }
+    }
+    let finalExtra = {};
+    data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
+    if (data === "error") {
+        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+        return -1;
+    }
+    if (data === "unsupported") {
+        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+        return -2;
+    } else {
+        finalExtra = {
+            coin: extraCoin[0],
+            name: data.name,
+            price: data.price,
+            value: data.value
+        };
+    }
+    const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
+    await client.sendMessage(isMe ? msg.to : msg.from, `*3000$* Investment\n\n*ETH @ $ ${numeral(cumulate[0].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[0].price).format("0,0.00")}\n\n*VET @ $ ${numeral(cumulate[1].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[1].price).format("0,0.00")}\n\n*ADA @ $ ${numeral(cumulate[2].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[2].price).format("0,0.00")}\n\n*XRP @ $ ${numeral(cumulate[3].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[3].price).format("0,0.00")}\n\n*SOL @ $ ${numeral(cumulate[4].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[4].price).format("0,0.00")}\n\n*XDC @ $ ${numeral(cumulate[5].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[5].price).format("0,0.00")}\n\n*ALBT @ $ ${numeral(cumulate[6].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[6].price).format("0,0.00")}\n\n*VXV @ $ ${numeral(cumulate[7].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[7].price).format("0,0.00")}\n\n*QNT @ $ ${numeral(cumulate[8].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[8].price).format("0,0.00")}\n\n*RVN @ $ ${numeral(cumulate[9].value).format("0,0.00")}*\nAmount: $ ${numeral(cumulate[9].price).format("0,0.00")}\n`);
+    await client.sendMessage(isMe ? msg.to : msg.from, `*5000$* Investment\n\n*XRP @ $ ${numeral(finalExtra.value).format("0,0.00")}*\nAmount: $ ${numeral(finalExtra.price).format("0,0.00")}`+`\n\n${date}`);
+    return 0;
+}
+
+/**
+ *
+ * @param client
+ * @param msg
+ * @param isMe
+ * @returns {Promise<number>}
+ */
+async function getLocations(client, msg, isMe) {
+    console.log("getting location...");
+    const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
+    await client.sendMessage(isMe ? msg.to : msg.from, `*3000$* Investment\n\n*ETH* : Metamask (private key backed up)\n\n*VET* : my laptop (private key backed up)\n\n*XRP* : phone XUMM app (private key backed up)\n\n*SOL* : phantom chrome extension (private key backed up)\n\n*XDC* : web wallet (private key backed up)\n\n*ALBT* : hotbit exchange\n\n*VXV* : probit exchange\n\n*QNT* : 0.142 in hotbit exchange, 2 in metamask\n\n*RVN* : my laptop (private key backed up)`);
+    await client.sendMessage(isMe ? msg.to : msg.from, `*5000$* Investment\n\n*XRP* : wanja's iphone (has private key backed up)\n`+`\n${date}`);
+    return 0;
+}
+
+/**
+ *
+ * @param client
+ * @param msg
+ * @param isMe
+ * @returns {Promise<number>}
+ */
+async function getAddresses(client, msg, isMe) {
+    console.log("getting addresses...");
+    const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
+    await client.sendMessage(isMe ? msg.to : msg.from, `*3000$* Investment\n\n*ETH* : https://etherscan.io/address/0x484Fb0ebAA66Bc8E62737060Dd7703F3CaB39E7c\n\n*VET* : https://explore.vechain.org/accounts/0xe7705f8856561cb6087419c870f13d4200c6c84c\n\n*XRP* : https://xrpscan.com/account/rnbMyKSEgRBSFNb1A1LyjxTqN44EMLwY3J\n\n*SOL* : https://explorer.solana.com/address/4JgW8Mz8m6FkqBasfWYewD6qNEwYFbJusNSQkXGkdKAD\n\n*XDC* : https://explorer.xinfin.network/addr/xdc9748b78dd18eca3520484e60e5c7d64b7d18e385\n\n*ALBT* : UNKNOWN\n\n*VXV* : UNKNOWN\n\n*QNT* : 0.142 UNKNOWN, 2 at https://etherscan.io/address/0x484Fb0ebAA66Bc8E62737060Dd7703F3CaB39E7c\n\n*RVN* : https://ravencoin.network/address/RKnP6eoVpehw9AcDXGLk2v8ySwqsap7hog\n`);
+    await client.sendMessage(isMe ? msg.to : msg.from, `*5000$* Investment\n\n*XRP* : https://xrpscan.com/account/rn5UUayGA1ZQDeHuhBZdyQftwA9Fwzmvqz\n`+`\n${date}`);
+    return 0;
+}
+
 fs.readFile(`${__dirname}/current.txt`, (err, data) => {
     if (err) throw new Error("Error writing values: "+err);
     const last  = data.toString().split(',');
@@ -70,7 +263,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
             if (msg.body.includes("!info")) {
 
                 const startdata = await start.get(await client.info.getBatteryStatus(), client.info.phone);
-                client.sendMessage(msg.to, new MessageMedia(startdata.mimetype, startdata.data, startdata.filename), { caption: startdata.msg })
+                await client.sendMessage(msg.to, new MessageMedia(startdata.mimetype, startdata.data, startdata.filename), { caption: startdata.msg })
 
             }
         }
@@ -140,7 +333,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
 
                 msg.delete(true)
                 data = await help.mainF(msg.body);
-                client.sendMessage(msg.to, data)
+                await client.sendMessage(msg.to, data)
 
             } else if (msg.body === "!ping") { // Ping command
 
@@ -149,7 +342,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
             } else if (msg.body === "!start") { // Start command
                 msg.delete(true)
                 var startdata = await start.get(await client.info.getBatteryStatus(), client.info.phone)
-                client.sendMessage(msg.to, new MessageMedia(startdata.mimetype, startdata.data, startdata.filename), {caption: startdata.msg})
+                await client.sendMessage(msg.to, new MessageMedia(startdata.mimetype, startdata.data, startdata.filename), {caption: startdata.msg})
 
             } else if (msg.body === '!delete' && msg.hasQuotedMsg) {
 
@@ -158,30 +351,30 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 if (quotedMsg.fromMe) {
                     quotedMsg.delete(true);
                 } else {
-                    client.sendMessage(msg.to, "Sorry, I can't delete that message.");
+                    await client.sendMessage(msg.to, "Sorry, I can't delete that message.");
                 }
 
             } else if (msg.body.startsWith("!qr ")) { // QR Code Gen
 
                 msg.delete(true)
                 data = await qr.qrgen(msg.body.replace("!qr ", ""));
-                client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), {caption: `QR code for 👇\n` + "```" + msg.body.replace("!qr ", "") + "```"});
+                await client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), {caption: `QR code for 👇\n` + "```" + msg.body.replace("!qr ", "") + "```"});
 
             } else if (msg.body.startsWith("!qr") && msg.hasQuotedMsg) { // QR Code Gen from reply text
 
                 msg.delete(true)
                 quotedMsg = await msg.getQuotedMessage();
                 data = await qr.qrgen(quotedMsg.body);
-                client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), {caption: `QR code for 👇\n` + "```" + quotedMsg.body + "```"});
+                await client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), {caption: `QR code for 👇\n` + "```" + quotedMsg.body + "```"});
 
             } else if (msg.body.startsWith("!jiosaavn ")) { // Jiosaavn Module
 
                 msg.delete(true)
                 data = await saavn.mainF(msg.body.replace("!jiosaavn ", ""));
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch this Jiosaavn Link, Maybe it's a wrong url.```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch this Jiosaavn Link, Maybe it's a wrong url.```")
                 } else {
-                    client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), {caption: `🎶 *${data.title}* _(${data.released_year})_\n\n📀 *Artist :*  ` + "```" + data.singers + "```\n📚 *Album :*  " + "```" + data.album + "```" + `\n\n*Download Url* 👇\n${data.url}`});
+                    await client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), {caption: `🎶 *${data.title}* _(${data.released_year})_\n\n📀 *Artist :*  ` + "```" + data.singers + "```\n📚 *Album :*  " + "```" + data.album + "```" + `\n\n*Download Url* 👇\n${data.url}`});
                 }
 
             } else if (msg.body.startsWith("!jiosaavn") && msg.hasQuotedMsg) { // Jiosaavn Module message reply
@@ -190,9 +383,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 quotedMsg = await msg.getQuotedMessage();
                 data = await saavn.mainF(quotedMsg.body);
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch this Jiosaavn Link, Maybe it's a wrong url.```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch this Jiosaavn Link, Maybe it's a wrong url.```")
                 } else {
-                    client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), {caption: `🎶 *${data.title}* _(${data.released_year})_\n\n📀 *Artist :*  ` + "```" + data.singers + "```\n📚 *Album :*  " + "```" + data.album + "```" + `\n\n*Download Url* 👇\n${data.url}`});
+                    await client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), {caption: `🎶 *${data.title}* _(${data.released_year})_\n\n📀 *Artist :*  ` + "```" + data.singers + "```\n📚 *Album :*  " + "```" + data.album + "```" + `\n\n*Download Url* 👇\n${data.url}`});
                 }
 
             } else if (msg.body.startsWith("!carbon ")) { // Carbon Module
@@ -200,9 +393,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 msg.delete(true)
                 data = await carbon.mainF(msg.body.replace("!carbon ", ""));
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to create the Carbon.```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to create the Carbon.```")
                 } else {
-                    client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), {caption: `Carbon for 👇\n` + "```" + msg.body.replace("!carbon ", "") + "```"});
+                    await client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), {caption: `Carbon for 👇\n` + "```" + msg.body.replace("!carbon ", "") + "```"});
                 }
 
             } else if (msg.body.startsWith("!carbon") && msg.hasQuotedMsg) { // Carbon Module message reply
@@ -211,9 +404,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 quotedMsg = await msg.getQuotedMessage();
                 data = await carbon.mainF(quotedMsg.body);
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to create the Carbon.```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to create the Carbon.```")
                 } else {
-                    client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), {caption: `Carbon for 👇\n` + "```" + quotedMsg.body + "```"});
+                    await client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.data, data.filename), {caption: `Carbon for 👇\n` + "```" + quotedMsg.body + "```"});
                 }
 
             } else if (msg.body.startsWith("!directlink") && msg.hasQuotedMsg) { // Telegraph Module
@@ -233,9 +426,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 msg.delete(true)
                 data = await youtube.mainF(msg.body.replace("!yt ", ""));
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch the YouTube video```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch the YouTube video```")
                 } else {
-                    client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), {caption: `*${data.title}*\n\nViews: ` + "```" + data.views + "```\nLikes: " + "```" + data.likes + "```\nComments: " + "```" + data.comments + "```\n\n*Download Link* 👇\n" + "```" + data.download_link + "```"});
+                    await client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), {caption: `*${data.title}*\n\nViews: ` + "```" + data.views + "```\nLikes: " + "```" + data.likes + "```\nComments: " + "```" + data.comments + "```\n\n*Download Link* 👇\n" + "```" + data.download_link + "```"});
                 }
 
             } else if (msg.body.startsWith("!yt") && msg.hasQuotedMsg) { // Youtube Module Reply
@@ -244,9 +437,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 quotedMsg = await msg.getQuotedMessage();
                 data = await youtube.mainF(quotedMsg.body);
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch the YouTube video```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch the YouTube video```")
                 } else {
-                    client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), {caption: `*${data.title}*\n\nViews: ` + "```" + data.views + "```\nLikes: " + "```" + data.likes + "```\nComments: " + "```" + data.comments + "```\n\n*Download Link* 👇\n" + "```" + data.download_link + "```"});
+                    await client.sendMessage(msg.to, new MessageMedia(data.image.mimetype, data.image.data, data.image.filename), {caption: `*${data.title}*\n\nViews: ` + "```" + data.views + "```\nLikes: " + "```" + data.likes + "```\nComments: " + "```" + data.comments + "```\n\n*Download Link* 👇\n" + "```" + data.download_link + "```"});
                 }
 
             } else if (msg.body.startsWith("!weather ")) { // Weather Module
@@ -254,9 +447,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 msg.delete(true)
                 data = await weather.mainF(msg.body.replace("!weather ", ""));
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch Weather```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch Weather```")
                 } else {
-                    client.sendMessage(msg.to, `*Today's Weather at ${data.place}*\n` + "```" + data.current_observation.text + " (" + data.current_observation.temperature + "°C)```\n\n*Type:* " + "```" + data.today_forcast.text + "```\n*Max temperature:* " + "```" + data.today_forcast.high + "°C```\n*Min temperature:* " + "```" + data.today_forcast.low + "°C```");
+                    await client.sendMessage(msg.to, `*Today's Weather at ${data.place}*\n` + "```" + data.current_observation.text + " (" + data.current_observation.temperature + "°C)```\n\n*Type:* " + "```" + data.today_forcast.text + "```\n*Max temperature:* " + "```" + data.today_forcast.high + "°C```\n*Min temperature:* " + "```" + data.today_forcast.low + "°C```");
                 }
 
             } else if (msg.body.startsWith("!tr") && msg.hasQuotedMsg) { // Translator Module reply
@@ -265,9 +458,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 quotedMsg = await msg.getQuotedMessage();
                 data = await translator.argu(quotedMsg.body, msg.body);
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while translate```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while translate```")
                 } else {
-                    client.sendMessage(msg.to, `*Original (${data.ori_lang}) :* ` + "```" + data.original + "```\n\n" + `*Translation (${data.trans_lang}) :* ` + "```" + data.translated + "```")
+                    await client.sendMessage(msg.to, `*Original (${data.ori_lang}) :* ` + "```" + data.original + "```\n\n" + `*Translation (${data.trans_lang}) :* ` + "```" + data.translated + "```")
                 }
 
             } else if (msg.body.startsWith("!tr")) { // Translator Module
@@ -275,9 +468,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 msg.delete(true)
                 data = await translator.single(msg.body);
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while translate```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while translate```")
                 } else {
-                    client.sendMessage(msg.to, `*Original (${data.ori_lang}) :* ` + "```" + data.original + "```\n\n" + `*Translation (${data.trans_lang}) :* ` + "```" + data.translated + "```")
+                    await client.sendMessage(msg.to, `*Original (${data.ori_lang}) :* ` + "```" + data.original + "```\n\n" + `*Translation (${data.trans_lang}) :* ` + "```" + data.translated + "```")
                 }
 
             } else if (msg.body.startsWith("!ud ")) { // Urban Dictionary Module
@@ -285,9 +478,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 msg.delete(true)
                 data = await ud.mainF(msg.body.replace("!ud ", ""));
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while Lookup on Urban Dictionary```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while Lookup on Urban Dictionary```")
                 } else {
-                    client.sendMessage(msg.to, "*Term:* ```" + data.term + "```\n\n" + "*Definition:* ```" + data.def + "```\n\n" + "*Example:* ```" + data.example + "```")
+                    await client.sendMessage(msg.to, "*Term:* ```" + data.term + "```\n\n" + "*Definition:* ```" + data.def + "```\n\n" + "*Example:* ```" + data.example + "```")
                 }
             } else if (msg.body.startsWith("!sticker") && msg.hasQuotedMsg) { // Sticker Module
 
@@ -295,9 +488,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 quotedMsg = await msg.getQuotedMessage();
                 if (quotedMsg.hasMedia) {
                     attachmentData = await quotedMsg.downloadMedia();
-                    client.sendMessage(msg.to, new MessageMedia(attachmentData.mimetype, attachmentData.data, attachmentData.filename), {sendMediaAsSticker: true});
+                    await client.sendMessage(msg.to, new MessageMedia(attachmentData.mimetype, attachmentData.data, attachmentData.filename), {sendMediaAsSticker: true});
                 } else {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```No image found to make a Sticker```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```No image found to make a Sticker```")
                 }
             } else if (msg.body === "!awake") {
                 client.sendPresenceAvailable()
@@ -307,11 +500,11 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 data = await gitinfo.detail(msg.body.replace('!git ', ''));
                 if (data.status) {
                     if (data.data.status) {
-                        await client.sendMessage(msg.to, new MessageMedia(data.data.mimetype, data.data.data, data.data.filename))
+                        await await client.sendMessage(msg.to, new MessageMedia(data.data.mimetype, data.data.data, data.data.filename))
                     }
-                    client.sendMessage(msg.to, data.msg)
+                    await client.sendMessage(msg.to, data.msg)
                 } else {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```" + data.msg + "```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```" + data.msg + "```")
                 }
             } else if (msg.body.startsWith('!cricket ')) { // Cricket Module Start
                 msg.delete(true)
@@ -325,17 +518,17 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 var task = cron.schedule(`*/${packed.interval} * * * *`, async () => {
                     var fetchscore = await cricket(packed.url)
                     if (fetchscore.status) {
-                        client.sendMessage(msg.to, fetchscore.msg)
+                        await client.sendMessage(msg.to, fetchscore.msg)
                     }
                 })
 
                 if (allricketschedules[msg.to] !== undefined) {
                     let critask = allricketschedules[msg.to];
                     critask.stop();
-                    client.sendMessage(msg.to, `Previous cricket updates of this chat has been stopped !`)
+                    await client.sendMessage(msg.to, `Previous cricket updates of this chat has been stopped !`)
                 }
 
-                client.sendMessage(msg.to, `⏱ *Update setted*\n\n_It will now give you cricket update in every ${packed.interval}M and it will stop after ${packed.stoptime}M._`)
+                await client.sendMessage(msg.to, `⏱ *Update setted*\n\n_It will now give you cricket update in every ${packed.interval}M and it will stop after ${packed.stoptime}M._`)
 
                 setTimeout(() => {
                     task.stop()
@@ -347,7 +540,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 await msg.delete(true)
                 let critask = allricketschedules[msg.to];
                 critask.stop();
-                client.sendMessage(msg.to, `All running cricket updates of this chat has been stopped !`)
+                await client.sendMessage(msg.to, `All running cricket updates of this chat has been stopped !`)
             } else if (msg.body.startsWith("!spam ")) { // Spamming Op in the chat
                 msg.delete(true)
                 var i, count
@@ -355,13 +548,13 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     quotedMsg = await msg.getQuotedMessage();
                     count = msg.body.replace("!spam ", "")
                     if (isNaN(count)) {
-                        client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Invalid count```")
+                        await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Invalid count```")
                         return 0
                     }
                     if (count > 0)
                         count = parseInt(count)
                     else {
-                        client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Count can't be zero.```")
+                        await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Count can't be zero.```")
                         return 0
                     }
                     if (quotedMsg.hasMedia) {
@@ -369,10 +562,10 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
 
                         sticker = quotedMsg.type === "sticker";
                         for (i = 0; i < count; i++)
-                            client.sendMessage(msg.to, new MessageMedia(media.mimetype, media.data, media.filename), {sendMediaAsSticker: sticker});
+                            await client.sendMessage(msg.to, new MessageMedia(media.mimetype, media.data, media.filename), {sendMediaAsSticker: sticker});
                     } else {
                         for (i = 0; i < count; i++)
-                            client.sendMessage(msg.to, quotedMsg.body)
+                            await client.sendMessage(msg.to, quotedMsg.body)
                     }
                 } else {
                     raw_text = msg.body.replace("!spam ", "")
@@ -381,23 +574,24 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                         count = res[0]
                         text = res[1]
                     } else {
-                        client.sendMessage(msg.to, "```Please read !help spam.```")
+                        await client.sendMessage(msg.to, "```Please read !help spam.```")
                         return 0
                     }
                     if (isNaN(count)) {
-                        client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Invalid count```")
+                        await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Invalid count```")
                         return 0
                     }
                     if (count > 0)
                         count = parseInt(count)
                     else {
-                        client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Count can't be zero.```")
+                        await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Count can't be zero.```")
                         return 0
                     }
                     for (i = 0; i < count; i++)
-                        client.sendMessage(msg.to, text)
+                        await client.sendMessage(msg.to, text)
                 }
-            } else if (msg.body === "!portfolio") {
+            } else if (msg.body.startsWith("!portfolio")) {
+                const command = decodeInput(msg.body);
                 await msg.delete(true);
                 const initiatorTo = msg.to.split('@');
                 const initiatorFrom = msg.from.split('@');
@@ -408,112 +602,36 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                         && !initiatorFrom[0].startsWith('254712054049')
                         && !initiatorFrom[0].startsWith('254701004363'));
 
-                if (checkInitiator) return client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Not authorized to execute this command```");
-                const allCoins = [
-                    {n: 'ETH', amount: '0.7576'},
-                    {n: 'VET', amount: '1167'},
-                    {n: 'ADA', amount: '54.561815'},
-                    {n: 'XRP', amount: '156.24'},
-                    {n: 'SOL', amount: '2.6287538'},
-                    {n: 'XDC', amount: '380'},
-                    {n: 'ALBT', amount: '43.99'},
-                    {n: 'VXV', amount: '3.8663'},
-                    {n: 'QNT', amount: '0.142'},
-                    {n: 'RVN', amount: '899'}];
-                const extraCoin = [
-                    {n: 'XRP', amount: '3785.704313'}
-                ];
-                const cumulate = [];
-                console.log("getting data...");
-                for (const coin of allCoins) {
-                    data = await crypto.getPrice(coin.n, coin.amount);
-                    console.log("received...", data);
-                    if (data === "error") {
-                        await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
-                        return -1;
-                    }
-                    if (data === "unsupported") {
-                        await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
-                        return -2;
-                    } else {
-                        cumulate.push({
-                            coin,
-                            name: data.name,
-                            price: data.price
-                        });
-                    }
-                }
-                let finalExtra = {};
-                data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
-                console.log("received FINAL...", data);
-                if (data === "error") {
-                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+                if (checkInitiator) {
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Not authorized to execute this command```");
                     return -1;
                 }
-                if (data === "unsupported") {
-                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
-                    return -2;
-                } else {
-                    finalExtra = {
-                        coin: extraCoin[0],
-                        name: data.name,
-                        price: data.price
-                    };
+                if (command === -2 || command === -1) {
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```\'"+msg.body+"\' is not recognized as an internal or external command```");
+                    return -1;
                 }
-                let total = 0;
-                let total2 = parseFloat(finalExtra.price);
-                for (const coin of cumulate) {
-                    const added = parseFloat(coin.price);
-                    total += added;
-                }
-                console.log("FINAL TOTAL...", total, total2);
-                console.log(lastRecorded.price1, lastRecorded.price2)
-                const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
-                if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
-                    client.sendMessage(msg.to, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                    client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
-                    console.log("skip 1")
-                } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
-                    client.sendMessage(msg.to, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                    client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
-                    console.log("skip 2")
-                } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
-                    client.sendMessage(msg.to, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                    client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
-                    console.log("skip 3")
-                } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
-                    client.sendMessage(msg.to, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                    client.sendMessage(msg.to, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
-                    console.log("skip 4")
-                } else {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
-                    console.log("skip 5")
-                }
-                console.log("done")
-                lastRecorded.price1 = total;
-                lastRecorded.price2 = total2;
-                fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2}`, (err) => {
-                    if (err) throw new Error("Error writing values: " + err);
-                    console.log("updated");
-                });
+                if (command === 0) return getAllData(client, msg, lastRecorded, true);
+                if (command === 1) return getCoins(client, msg, lastRecorded, true);
+                if (command === 2) return getAddresses(client, msg, true);
+                if (command === 3) return getLocations(client, msg, true);
             } else if (msg.body.startsWith("!watch ")) { // Watch Module
                 msg.delete(true)
                 data = await watch.getDetails(msg.body.replace("!watch ", ""));
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while fetching Movie/TV Show Details.```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while fetching Movie/TV Show Details.```")
                 } else if (data === "No Results") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *No Results Found!*\n\n` + "```Please check the name of Movie/TV Show you have entered.```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *No Results Found!*\n\n` + "```Please check the name of Movie/TV Show you have entered.```")
                 } else {
-                    client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.thumbdata, data.filename), {caption: data.caption});
+                    await client.sendMessage(msg.to, new MessageMedia(data.mimetype, data.thumbdata, data.filename), {caption: data.caption});
                 }
 
             } else if (msg.body.startsWith("!shorten ")) { // URL Shortener Module
                 msg.delete(true)
                 data = await shorten.getShortURL(msg.body.replace("!shorten ", ""));
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Please make sure the entered URL is in correct format.```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Please make sure the entered URL is in correct format.```")
                 } else {
-                    client.sendMessage(msg.to, `Short URL for ${data.input} is 👇\n${data.short}`)
+                    await client.sendMessage(msg.to, `Short URL for ${data.input} is 👇\n${data.short}`)
                 }
             } else if (msg.body.startsWith("!shorten") && msg.hasQuotedMsg) { // URL Shortener Module Reply
 
@@ -521,9 +639,9 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 quotedMsg = await msg.getQuotedMessage();
                 data = await shorten.getShortURL(quotedMsg.body);
                 if (data === "error") {
-                    client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Please make sure the entered URL is in correct format.```")
+                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Please make sure the entered URL is in correct format.```")
                 } else {
-                    client.sendMessage(msg.to, `Short URL for ${data.input} is 👇\n${data.short}`)
+                    await client.sendMessage(msg.to, `Short URL for ${data.input} is 👇\n${data.short}`)
                 }
 
             } else if (msg.body.startsWith("!ocr") && msg.hasQuotedMsg) { // OCR Module
@@ -545,12 +663,12 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
             } else if (msg.body.startsWith("!emailverifier ")) { // Email Verifier Module
                 msg.delete(true)
                 getdata = await emailVerifier(msg.body.replace('!emailverifier ', ''));
-                client.sendMessage(msg.to, getdata);
+                await client.sendMessage(msg.to, getdata);
             } else if (msg.body.startsWith("!song ")) { // Song downloader Module
 
                 msg.delete(true)
                 getdata = await songM.search(msg.body.replace('!song ', ''));
-                const sendmessage = await client.sendMessage(msg.to, getdata.content); // have to grab the message ID
+                const sendmessage = await await client.sendMessage(msg.to, getdata.content); // have to grab the message ID
                 if (getdata.status) {
                     fs.writeFileSync(`${__dirname}/modules/tempdata/song~${sendmessage.id.id}.json`, JSON.stringify(getdata.songarray))
                 }
@@ -561,13 +679,13 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                 quotedMsg = await msg.getQuotedMessage();
                 getdata = await songM.download(msg.body.replace('!dldsong ', ''), quotedMsg.id.id);
                 if (getdata.status) {
-                    client.sendMessage(msg.to, new MessageMedia(getdata.content.image.mimetype, getdata.content.image.data, getdata.content.image.filename), {caption: getdata.content.text});
+                    await client.sendMessage(msg.to, new MessageMedia(getdata.content.image.mimetype, getdata.content.image.data, getdata.content.image.filename), {caption: getdata.content.text});
                 } else {
-                    client.sendMessage(msg.to, getdata.content);
+                    await client.sendMessage(msg.to, getdata.content);
                 }
             }
-        }
-        else if (msg.body === "!portfolio") {
+        } else if (msg.body.startsWith("!portfolio")) {
+            const command = decodeInput(msg.body);
             await msg.delete(true);
             const initiatorTo = msg.to.split('@');
             const initiatorFrom = msg.from.split('@');
@@ -578,90 +696,25 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     && !initiatorFrom[0].startsWith('254712054049')
                     && !initiatorFrom[0].startsWith('254701004363'));
 
-            if (checkInitiator) return client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Not authorized to execute this command```");
-            const allCoins = [
-                {n: 'ETH', amount: '0.7576'},
-                {n: 'VET', amount: '1167'},
-                {n: 'ADA', amount: '54.561815'},
-                {n: 'XRP', amount: '156.24'},
-                {n: 'SOL', amount: '2.6287538'},
-                {n: 'XDC', amount: '380'},
-                {n: 'ALBT', amount: '43.99'},
-                {n: 'VXV', amount: '3.8663'},
-                {n: 'QNT', amount: '0.142'},
-                {n: 'RVN', amount: '899'}];
-            const extraCoin = [
-                {n: 'XRP', amount: '3785.704313'}
-            ];
-            const cumulate = [];
-            for (const coin of allCoins) {
-                data = await crypto.getPrice(coin.n, coin.amount);
-                if (data === "error") {
-                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
-                    return -1;
-                }
-                if (data === "unsupported") {
-                    client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
-                    return -2;
-                } else {
-                    cumulate.push({
-                        coin,
-                        name: data.name,
-                        price: data.price
-                    });
-                }
-            }
-            let finalExtra = {};
-            data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
-            if (data === "error") {
-                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+            if (checkInitiator) {
+                await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Not authorized to execute this command```");
                 return -1;
             }
-            if (data === "unsupported") {
-                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
-                return -2;
-            } else {
-                finalExtra = {
-                    coin: extraCoin[0],
-                    name: data.name,
-                    price: data.price
-                };
+            if (command === -2 || command === -1) {
+                await client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```\'"+msg.body+"\' is not recognized as an internal or external command```");
+                return -1;
             }
-            let total = 0;
-            let total2 = parseFloat(finalExtra.price);
-            for (const coin of cumulate) {
-                const added = parseFloat(coin.price);
-                total += added;
-            }
-            const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
-            if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
-                client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
-            } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
-                client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
-            } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
-                client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-                client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
-            } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
-                client.sendMessage(msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n INITIAL INVESTMENT:\n\t$ 3,000\n\n CURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\n INITIAL INVESTMENT:\n $ 5,000\n\n CURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-                client.sendMessage(msg.from, "*NB:-* The balances shown does not include transaction costs on the used networks including crypto exchanges fees. e.g. transferring Ether might have had a cost of *$ 50* causing initial investment to be less *$ 50*");
-            } else {
-                client.sendMessage(msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
-            }
-            lastRecorded.price1 = total;
-            lastRecorded.price2 = total2;
-            fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2}`, (err) => {
-                if (err) throw new Error("Error writing values: " + err);
-                console.log("updated");
-            });
+            if (command === 0) return getAllData(client, msg, lastRecorded, false);
+            if (command === 1) return getCoins(client, msg, lastRecorded, false);
+            if (command === 2) return getAddresses(client, msg, false);
+            if (command === 3) return getLocations(client, msg, false);
         }
     });
 
     client.on('message_revoke_everyone', async (after, before) => {
         if (before) {
             if (before.fromMe !== true && before.hasMedia !== true && before.author === undefined && config.enable_delete_alert === "true") {
-                //client.sendMessage(before.from, "_You deleted this message_ 👇👇\n\n" + before.body)
+                //await client.sendMessage(before.from, "_You deleted this message_ 👇👇\n\n" + before.body)
             }
         }
     });
