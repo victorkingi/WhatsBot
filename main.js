@@ -12,7 +12,6 @@ const youtube = require('./modules/youtube');
 const weather = require('./modules/weather');
 const { exec } = require('child_process');
 const help = require('./modules/help');
-const translator = require('./modules/translator');
 const start = require('./modules/start');
 const ud = require('./modules/ud');
 const gitinfo = require('./modules/git');
@@ -475,27 +474,6 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
                     await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened to fetch Weather```")
                 } else {
                     await client.sendMessage(msg.to, `*Today's Weather at ${data.place}*\n` + "```" + data.current_observation.text + " (" + data.current_observation.temperature + "°C)```\n\n*Type:* " + "```" + data.today_forcast.text + "```\n*Max temperature:* " + "```" + data.today_forcast.high + "°C```\n*Min temperature:* " + "```" + data.today_forcast.low + "°C```");
-                }
-
-            } else if (msg.body.startsWith("!tr") && msg.hasQuotedMsg) { // Translator Module reply
-
-                msg.delete(true)
-                quotedMsg = await msg.getQuotedMessage();
-                data = await translator.argu(quotedMsg.body, msg.body);
-                if (data === "error") {
-                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while translate```")
-                } else {
-                    await client.sendMessage(msg.to, `*Original (${data.ori_lang}) :* ` + "```" + data.original + "```\n\n" + `*Translation (${data.trans_lang}) :* ` + "```" + data.translated + "```")
-                }
-
-            } else if (msg.body.startsWith("!tr")) { // Translator Module
-
-                msg.delete(true)
-                data = await translator.single(msg.body);
-                if (data === "error") {
-                    await client.sendMessage(msg.to, `🙇‍♂️ *Error*\n\n` + "```Something Unexpected Happened while translate```")
-                } else {
-                    await client.sendMessage(msg.to, `*Original (${data.ori_lang}) :* ` + "```" + data.original + "```\n\n" + `*Translation (${data.trans_lang}) :* ` + "```" + data.translated + "```")
                 }
 
             } else if (msg.body.startsWith("!ud ")) { // Urban Dictionary Module
