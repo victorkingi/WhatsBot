@@ -39,7 +39,8 @@ const allCoins = [
     {n: 'QNT', amount: '2.142'},
     {n: 'RVN', amount: '899'}];
 const extraCoin = [
-    {n: 'XRP', amount: '3765.704313'}
+    {n: 'XRP', amount: '3765.704313'},
+    {n: 'ETH', amount: '0.46807046'}
 ];
 
 function decodeInput(body) {
@@ -62,6 +63,27 @@ function decodeInput(body) {
     return -2;
 }
 
+function getLevel(lastRecorded, total, total2, total3) {
+    const allRise = lastRecorded.price1 < total && lastRecorded.price2 < total2 && lastRecorded.price3 < total3; // 111
+    const allFall = lastRecorded.price1 > total && lastRecorded.price2 > total2 && lastRecorded.price3 > total3; // 000
+    const oneRise = lastRecorded.price1 < total && lastRecorded.price2 > total2 && lastRecorded.price3 > total3; // 100
+    const twoRise = lastRecorded.price1 > total && lastRecorded.price2 < total2 && lastRecorded.price3 > total3; // 010
+    const threeRise = lastRecorded.price1 > total && lastRecorded.price2 > total2 && lastRecorded.price3 < total3; // 001
+    const oneTwoRise = lastRecorded.price1 < total && lastRecorded.price2 < total2 && lastRecorded.price3 > total3; // 110
+    const oneThreeRise = lastRecorded.price1 < total && lastRecorded.price2 > total2 && lastRecorded.price3 < total3; // 101
+    const twoThreeRise = lastRecorded.price1 > total && lastRecorded.price2 < total2 && lastRecorded.price3 < total3; // 011
+    const testArr = [allRise, allFall, oneTwoRise, oneRise, twoRise, threeRise, oneThreeRise, twoThreeRise];
+    if (testArr.filter(Boolean).length !== 1) throw new Error("Invalid boolean logic! "+testArr);
+    if (allRise) return ["📈", "📈", "📈"];
+    if (allFall) return ["📉", "📉", "📉"];
+    if (oneRise) return ["📈", "📉", "📉"];
+    if (twoRise) return ["📉", "📈", "📉"];
+    if (threeRise) return ["📉", "📉", "📈"];
+    if (oneTwoRise) return ["📈", "📈", "📉"];
+    if (oneThreeRise) return ["📈", "📉", "📈"];
+    if (twoThreeRise) return ["📉", "📈", "📈"];
+}
+
 /**
  *
  * @param client
@@ -72,6 +94,7 @@ function decodeInput(body) {
  */
 async function getAllData(client, msg, lastRecorded, isMe) {
     let data;
+    let extraData;
     const cumulate = [];
     for (const coin of allCoins) {
         data = await crypto.getPrice(coin.n, coin.amount);
@@ -91,45 +114,41 @@ async function getAllData(client, msg, lastRecorded, isMe) {
             });
         }
     }
-    let finalExtra = {};
-    data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
-    if (data === "error") {
-        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
-        return -1;
-    }
-    if (data === "unsupported") {
-        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
-        return -2;
-    } else {
-        finalExtra = {
-            coin: extraCoin[0],
-            name: data.name,
-            price: data.price
-        };
+    const finalExtra = [];
+    for (const c of extraCoin) {
+        extraData = await crypto.getPrice(c.n, c.amount);
+        console.log(extraData);
+        if (extraData === "error") {
+            await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+            return -1;
+        }
+        if (extraData === "unsupported") {
+            await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+            return -2;
+        } else {
+            finalExtra.push({
+                c,
+                name: extraData.name,
+                price: extraData.price
+            });
+        }
     }
     let total = 0;
-    let total2 = parseFloat(finalExtra.price);
+    let total2 = parseFloat(finalExtra[0].price);
+    let total3 = parseFloat(finalExtra[1].price);
     for (const coin of cumulate) {
         const added = parseFloat(coin.price);
         total += added;
     }
     const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
-    if (lastRecorded.price1 < total && lastRecorded.price2 < total2) {
-        await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-      } else if (lastRecorded.price1 < total && lastRecorded.price2 > total2) {
-        await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📈 as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-   } else if (lastRecorded.price1 > total && lastRecorded.price2 < total2) {
-        await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📈 as of ${date}`);
-     } else if (lastRecorded.price1 > total && lastRecorded.price2 > total2) {
-        await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* 📉 as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* 📉 as of ${date}`);
-    } else {
-        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something went wrong```")
-    }
+    const level = getLevel(lastRecorded, total, total2, total3); // returns array of icons to be used
+    await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* ${level[0]} as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* ${level[1]} as of ${date}\n\n3) *ETH*\nINITIAL INVESTMENT:\n $ 2014.84\n\nCURRENT: \n *$ ${numeral(total3).format('0,0.00')}* ${level[2]} as of ${date}`);
     await client.sendMessage(isMe ? msg.to : msg.from, "Other commands:\n*!portfolio -c* : View all coin amounts and prices\n*!portfolio -a* : view all addresses\n*!portfolio -l* : view location coin is stored");
     console.log("done sending");
     lastRecorded.price1 = total;
     lastRecorded.price2 = total2;
-    fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2}`, (err) => {
+    lastRecorded.price3 = total3;
+    fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2},${lastRecorded.price3}`, (err) => {
         if (err) throw new Error("Error writing values: " + err);
         console.log("updated");
     });
@@ -146,6 +165,7 @@ async function getAllData(client, msg, lastRecorded, isMe) {
  */
 async function getCoins(client, msg, lastRecorded, isMe) {
     let data;
+    let extraData;
     const cumulate = [];
     console.log("Getting coins...")
     for (const coin of allCoins) {
@@ -166,26 +186,30 @@ async function getCoins(client, msg, lastRecorded, isMe) {
             });
         }
     }
-    let finalExtra = {};
-    data = await crypto.getPrice(extraCoin[0].n, extraCoin[0].amount);
-    if (data === "error") {
-        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
-        return -1;
-    }
-    if (data === "unsupported") {
-        await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
-        return -2;
-    } else {
-        finalExtra = {
-            coin: extraCoin[0],
-            name: data.name,
-            price: data.price,
-            value: data.value
-        };
+    const finalExtra = [];
+    for (const c of extraCoin) {
+        extraData = await crypto.getPrice(c.n, c.amount);
+        console.log(extraData);
+        if (extraData === "error") {
+            await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
+            return -1;
+        }
+        if (extraData === "unsupported") {
+            await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Support for this CryptoCurrency is not yet added```");
+            return -2;
+        } else {
+            finalExtra.push({
+                coin: c,
+                name: extraData.name,
+                price: extraData.price,
+                value: extraData.value
+            });
+        }
     }
     const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
     await client.sendMessage(isMe ? msg.to : msg.from, `*3000$* Investment\n\n*ETH @ $ ${numeral(cumulate[0].value).format("0,0.00")}*\nCoins: ${allCoins[0].amount}\nAmount: $ ${numeral(cumulate[0].price).format("0,0.00")}\n\n*VET @ $ ${numeral(cumulate[1].value).format("0,0.00")}*\nCoins: ${allCoins[1].amount}\nAmount: $ ${numeral(cumulate[1].price).format("0,0.00")}\n\n*ADA @ $ ${numeral(cumulate[2].value).format("0,0.00")}*\nCoins: ${allCoins[2].amount}\nAmount: $ ${numeral(cumulate[2].price).format("0,0.00")}\n\n*XRP @ $ ${numeral(cumulate[3].value).format("0,0.00")}*\nCoins: ${allCoins[3].amount}\nAmount: $ ${numeral(cumulate[3].price).format("0,0.00")}\n\n*SOL @ $ ${numeral(cumulate[4].value).format("0,0.00")}*\nCoins: ${allCoins[4].amount}\nAmount: $ ${numeral(cumulate[4].price).format("0,0.00")}\n\n*XDC @ $ ${numeral(cumulate[5].value).format("0,0.00")}*\nCoins: ${allCoins[5].amount}\nAmount: $ ${numeral(cumulate[5].price).format("0,0.00")}\n\n*ALBT @ $ ${numeral(cumulate[6].value).format("0,0.00")}*\nCoins: ${allCoins[6].amount}\nAmount: $ ${numeral(cumulate[6].price).format("0,0.00")}\n\n*VXV @ $ ${numeral(cumulate[7].value).format("0,0.00")}*\nCoins: ${allCoins[7].amount}\nAmount: $ ${numeral(cumulate[7].price).format("0,0.00")}\n\n*QNT @ $ ${numeral(cumulate[8].value).format("0,0.00")}*\nCoins: ${allCoins[8].amount}\nAmount: $ ${numeral(cumulate[8].price).format("0,0.00")}\n\n*RVN @ $ ${numeral(cumulate[9].value).format("0,0.00")}*\nCoins: ${allCoins[9].amount}\nAmount: $ ${numeral(cumulate[9].price).format("0,0.00")}\n`);
-    await client.sendMessage(isMe ? msg.to : msg.from, `*5000$* Investment\n\n*XRP @ $ ${numeral(finalExtra.value).format("0,0.00")}*\nCoins: ${extraCoin[0].amount}\nAmount: $ ${numeral(finalExtra.price).format("0,0.00")}`+`\n\n${date}`);
+    await client.sendMessage(isMe ? msg.to : msg.from, `*5000$* Investment\n\n*XRP @ $ ${numeral(finalExtra[0].value).format("0,0.00")}*\nCoins: ${extraCoin[0].amount}\nAmount: $ ${numeral(finalExtra[0].price).format("0,0.00")}`+`\n\n${date}`);
+    await client.sendMessage(isMe ? msg.to : msg.from, `*2014.84$* Investment\n\n*ETH @ $ ${numeral(finalExtra[1].value).format("0,0.00")}*\nCoins: ${extraCoin[1].amount}\nAmount: $ ${numeral(finalExtra[1].price).format("0,0.00")}`+`\n\n${date}`);
     return 0;
 }
 
@@ -201,6 +225,7 @@ async function getLocations(client, msg, isMe) {
     const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
     await client.sendMessage(isMe ? msg.to : msg.from, `*3000$* Investment\n\n*ETH* : Metamask (private key backed up)\n\n*VET* : my laptop (private key backed up)\n\n*XRP* : phone XUMM app (private key backed up)\n\n*SOL* : phantom chrome extension (private key backed up)\n\n*XDC* : web wallet (private key backed up)\n\n*ALBT* : hotbit exchange\n\n*VXV* : probit exchange\n\n*QNT* : 0.142 in hotbit exchange, 2 in metamask\n\n*RVN* : my laptop (private key backed up)`);
     await client.sendMessage(isMe ? msg.to : msg.from, `*5000$* Investment\n\n*XRP* : wanja's iphone (has private key backed up)\n`+`\n${date}`);
+    await client.sendMessage(isMe ? msg.to : msg.from, `*2014.84$* Investment\n\n*ETH* : Metamask/Polygon network (private key backed up)\n`+`\n${date}`);
     return 0;
 }
 
@@ -222,7 +247,7 @@ async function getAddresses(client, msg, isMe) {
 fs.readFile(`${__dirname}/current.txt`, (err, data) => {
     if (err) throw new Error("Error writing values: "+err);
     const last  = data.toString().split(',');
-    let lastRecorded = { price1: parseFloat(last[0]), price2: parseFloat(last[1]) };
+    let lastRecorded = { price1: parseFloat(last[0]), price2: parseFloat(last[1]), price3: parseFloat(last[2])};
     console.log("values loaded:", lastRecorded);
 
     const client = new Client({ puppeteer: { headless: true, args: ['--no-sandbox'] }, session: config.session });
