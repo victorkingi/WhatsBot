@@ -169,6 +169,7 @@ async function getCoins(client, msg, lastRecorded, isMe) {
     console.log("Getting coins...")
     for (const coin of allCoins) {
         data = await crypto.getPrice(coin.n, coin.amount);
+        console.log(data);
         if (data === "error") {
             await client.sendMessage(isMe ? msg.to : msg.from, `🙇‍♂️ *Error*\n\n` + "```Something unexpected happened while fetching Cryptocurrency Price```");
             return -1;
