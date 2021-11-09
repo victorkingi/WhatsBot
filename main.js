@@ -41,6 +41,7 @@ const extraCoin = [
     {n: 'XRP', amount: '3765.704313'},
     {n: 'ETH', amount: '0.46807046'}
 ];
+let ath = [0, 0, 0];
 
 function decodeInput(body) {
     let commands = body.split(' ');
@@ -73,14 +74,38 @@ function getLevel(lastRecorded, total, total2, total3) {
     const twoThreeRise = lastRecorded.price1 > total && lastRecorded.price2 < total2 && lastRecorded.price3 < total3; // 011
     const testArr = [allRise, allFall, oneTwoRise, oneRise, twoRise, threeRise, oneThreeRise, twoThreeRise];
     if (testArr.filter(Boolean).length !== 1) throw new Error("Invalid boolean logic! "+testArr);
-    if (allRise) return ["📈", "📈", "📈"];
+    if (allRise) {
+        ath = [total, total2, total3];
+        return ["📈", "📈", "📈"];
+    }
     if (allFall) return ["📉", "📉", "📉"];
-    if (oneRise) return ["📈", "📉", "📉"];
-    if (twoRise) return ["📉", "📈", "📉"];
-    if (threeRise) return ["📉", "📉", "📈"];
-    if (oneTwoRise) return ["📈", "📈", "📉"];
-    if (oneThreeRise) return ["📈", "📉", "📈"];
-    if (twoThreeRise) return ["📉", "📈", "📈"];
+    if (oneRise) {
+        ath[0] = total;
+        return ["📈", "📉", "📉"];
+    }
+    if (twoRise) {
+        ath[1] = total2;
+        return ["📉", "📈", "📉"];
+    }
+    if (threeRise) {
+        ath[2] = total3;
+        return ["📉", "📉", "📈"];
+    }
+    if (oneTwoRise) {
+        ath[0] = total;
+        ath[1] = total2;
+        return ["📈", "📈", "📉"];
+    }
+    if (oneThreeRise) {
+        ath[0] = total;
+        ath[2] = total3;
+        return ["📈", "📉", "📈"];
+    }
+    if (twoThreeRise) {
+        ath[1] = total2;
+        ath[2] = total3;
+        return ["📉", "📈", "📈"];
+    }
 }
 
 /**
@@ -141,13 +166,13 @@ async function getAllData(client, msg, lastRecorded, isMe) {
     }
     const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
     const level = getLevel(lastRecorded, total, total2, total3); // returns array of icons to be used
-    await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\nINITIAL INVESTMENT:\n\t$ 3,000\n\nCURRENT: \n\t*$ ${numeral(total).format('0,0.00')}* ${level[0]} as of ${date}\n\n2) *XRP*\nINITIAL INVESTMENT:\n $ 5,000\n\nCURRENT: \n *$ ${numeral(total2).format('0,0.00')}* ${level[1]} as of ${date}\n\n3) *ETH*\nINITIAL INVESTMENT:\n $ 2014.84\n\nCURRENT: \n *$ ${numeral(total3).format('0,0.00')}* ${level[2]} as of ${date}`);
+    await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n\nINITIAL: $ 3,000\nALL TIME HIGH: *$ ${numeral(ath[0]).format('0,0.00')}*\n\nCURRENT:\n\t*$ ${numeral(total).format('0,0.00')}* ${level[0]}\n\n2) *XRP*\n\nINITIAL: $ 5,000\nALL TIME HIGH: *$ ${numeral(ath[1]).format('0,0.00')}*\n\nCURRENT:\n\t*$ ${numeral(total2).format('0,0.00')}* ${level[1]}\n\n3) *ETH*\n\nINITIAL: $${numeral(2014.84).format('0,0.00')}\nALL TIME HIGH: *$ ${numeral(ath[2]).format('0,0.00')}*\n\nCURRENT:\n\t*$ ${numeral(total3).format('0,0.00')}* ${level[2]}\n\n*Timestamp:* ${date}`);
     await client.sendMessage(isMe ? msg.to : msg.from, "Other commands:\n*!portfolio -c* : View all coin amounts and prices\n*!portfolio -a* : view all addresses\n*!portfolio -l* : view location coin is stored");
     console.log("done sending");
     lastRecorded.price1 = total;
     lastRecorded.price2 = total2;
     lastRecorded.price3 = total3;
-    fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2},${lastRecorded.price3}`, (err) => {
+    fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2},${lastRecorded.price3},${ath.toString()}`, (err) => {
         if (err) throw new Error("Error writing values: " + err);
         console.log("updated");
     });
@@ -248,6 +273,7 @@ fs.readFile(`${__dirname}/current.txt`, (err, data) => {
     if (err) throw new Error("Error writing values: "+err);
     const last  = data.toString().split(',');
     let lastRecorded = { price1: parseFloat(last[0]), price2: parseFloat(last[1]), price3: parseFloat(last[2])};
+    ath = [parseFloat(last[3]), parseFloat(last[4]), parseFloat(last[5])];
     console.log("values loaded:", lastRecorded);
 
     const client = new Client({ puppeteer: { headless: true, args: ['--no-sandbox'] }, session: config.session });
