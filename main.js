@@ -41,7 +41,10 @@ const extraCoin = [
     {n: 'XRP', amount: '3765.704313'},
     {n: 'ETH', amount: '0.46807046'}
 ];
-let ath = [0, 0, 0];
+let ath = [{total: 0, date: new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'})},
+    {total2: 0, date: new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'})},
+    {total3: 0, date: new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'})}
+];
 
 function decodeInput(body) {
     let commands = body.split(' ');
@@ -63,7 +66,7 @@ function decodeInput(body) {
     return -2;
 }
 
-function getLevel(lastRecorded, total, total2, total3) {
+function getLevel(lastRecorded, total, total2, total3, date) {
     const allRise = lastRecorded.price1 < total && lastRecorded.price2 < total2 && lastRecorded.price3 < total3; // 111
     const allFall = lastRecorded.price1 > total && lastRecorded.price2 > total2 && lastRecorded.price3 > total3; // 000
     const oneRise = lastRecorded.price1 < total && lastRecorded.price2 > total2 && lastRecorded.price3 > total3; // 100
@@ -75,35 +78,35 @@ function getLevel(lastRecorded, total, total2, total3) {
     const testArr = [allRise, allFall, oneTwoRise, oneRise, twoRise, threeRise, oneThreeRise, twoThreeRise];
     if (testArr.filter(Boolean).length !== 1) throw new Error("Invalid boolean logic! "+testArr);
     if (allRise) {
-        ath = [total, total2, total3];
+        ath = [{total, date}, {total2, date}, {total3, date}];
         return ["📈", "📈", "📈"];
     }
     if (allFall) return ["📉", "📉", "📉"];
     if (oneRise) {
-        ath[0] = total;
+        ath[0] = {total, date};
         return ["📈", "📉", "📉"];
     }
     if (twoRise) {
-        ath[1] = total2;
+        ath[1] = {total2, date};
         return ["📉", "📈", "📉"];
     }
     if (threeRise) {
-        ath[2] = total3;
+        ath[2] = {total3, date};
         return ["📉", "📉", "📈"];
     }
     if (oneTwoRise) {
-        ath[0] = total;
-        ath[1] = total2;
+        ath[0] = {total, date};
+        ath[1] = {total2, date};
         return ["📈", "📈", "📉"];
     }
     if (oneThreeRise) {
-        ath[0] = total;
-        ath[2] = total3;
+        ath[0] = {total, date};
+        ath[2] = {total3, date};
         return ["📈", "📉", "📈"];
     }
     if (twoThreeRise) {
-        ath[1] = total2;
-        ath[2] = total3;
+        ath[1] = {total2, date};
+        ath[2] = {total3, date};
         return ["📉", "📈", "📈"];
     }
 }
@@ -164,15 +167,17 @@ async function getAllData(client, msg, lastRecorded, isMe) {
         const added = parseFloat(coin.price);
         total += added;
     }
+    console.log("before:", ath);
     const date = new Date().toLocaleString('en-US', {timeZone: 'Africa/Nairobi'});
-    const level = getLevel(lastRecorded, total, total2, total3); // returns array of icons to be used
-    await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n\nINITIAL: $ 3,000\nALL TIME HIGH: *$ ${numeral(ath[0]).format('0,0.00')}*\n\nCURRENT:\n\t*$ ${numeral(total).format('0,0.00')}* ${level[0]}\n\n2) *XRP*\n\nINITIAL: $ 5,000\nALL TIME HIGH: *$ ${numeral(ath[1]).format('0,0.00')}*\n\nCURRENT:\n\t*$ ${numeral(total2).format('0,0.00')}* ${level[1]}\n\n3) *ETH*\n\nINITIAL: $${numeral(2014.84).format('0,0.00')}\nALL TIME HIGH: *$ ${numeral(ath[2]).format('0,0.00')}*\n\nCURRENT:\n\t*$ ${numeral(total3).format('0,0.00')}* ${level[2]}\n\n*Timestamp:* ${date}`);
+    const level = getLevel(lastRecorded, total, total2, total3, date); // returns array of icons to be used
+    console.log("after:", ath);
+    await client.sendMessage(isMe ? msg.to : msg.from, `1) *XRP, XDC, VXV, ALBT, QNT, VET, ADA, RVN, SOL, ETH*\n\nINITIAL: $ 3,000\nALL TIME HIGH: *$ ${numeral(ath[0].total).format('0,0.00')}* _on ${ath[0].date}_\n\nCURRENT:\n\t*$ ${numeral(total).format('0,0.00')}* ${level[0]}\n\n2) *XRP*\n\nINITIAL: $ 5,000\nALL TIME HIGH: *$ ${numeral(ath[1].total2).format('0,0.00')}* _on ${ath[1].date}_\n\nCURRENT:\n\t*$ ${numeral(total2).format('0,0.00')}* ${level[1]}\n\n3) *ETH*\n\nINITIAL: $${numeral(2014.84).format('0,0.00')}\nALL TIME HIGH: *$ ${numeral(ath[2].total3).format('0,0.00')}* _on ${ath[2].date}_\n\nCURRENT:\n\t*$ ${numeral(total3).format('0,0.00')}* ${level[2]}\n\n*Timestamp:* ${date}`);
     await client.sendMessage(isMe ? msg.to : msg.from, "Other commands:\n*!portfolio -c* : View all coin amounts and prices\n*!portfolio -a* : view all addresses\n*!portfolio -l* : view location coin is stored");
     console.log("done sending");
     lastRecorded.price1 = total;
     lastRecorded.price2 = total2;
     lastRecorded.price3 = total3;
-    fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1},${lastRecorded.price2},${lastRecorded.price3},${ath.toString()}`, (err) => {
+    fs.writeFile(`${__dirname}/current.txt`, `${lastRecorded.price1}%%${lastRecorded.price2}%%${lastRecorded.price3}%%${JSON.stringify(ath[0])}%%${JSON.stringify(ath[1])}%%${JSON.stringify(ath[2])}`, (err) => {
         if (err) throw new Error("Error writing values: " + err);
         console.log("updated");
     });
@@ -271,10 +276,12 @@ async function getAddresses(client, msg, isMe) {
 
 fs.readFile(`${__dirname}/current.txt`, (err, data) => {
     if (err) throw new Error("Error writing values: "+err);
-    const last  = data.toString().split(',');
+    const last  = data.toString().split('%%');
     let lastRecorded = { price1: parseFloat(last[0]), price2: parseFloat(last[1]), price3: parseFloat(last[2])};
-    ath = [parseFloat(last[3]), parseFloat(last[4]), parseFloat(last[5])];
-    console.log("values loaded:", lastRecorded);
+    ath[0] = JSON.parse(last[3]);
+    ath[1] = JSON.parse(last[4]);
+    ath[2] = JSON.parse(last[5]);
+    console.log("values loaded:", lastRecorded, ath);
 
     const client = new Client({ puppeteer: { headless: true, args: ['--no-sandbox'] }, session: config.session });
 
