@@ -75,40 +75,43 @@ function getLevel(lastRecorded, total, total2, total3, date) {
     const oneTwoRise = lastRecorded.price1 < total && lastRecorded.price2 < total2 && lastRecorded.price3 > total3; // 110
     const oneThreeRise = lastRecorded.price1 < total && lastRecorded.price2 > total2 && lastRecorded.price3 < total3; // 101
     const twoThreeRise = lastRecorded.price1 > total && lastRecorded.price2 < total2 && lastRecorded.price3 < total3; // 011
+    const allRiseATH = ath[0].total < total && ath[1].total2 < total2 && ath[2].total3 < total3; // 111
+    const allFallATH = ath[0].total > total && ath[1].total2 > total2 && ath[2].total3 > total3; // 000
+    const oneRiseATH = ath[0].total < total && ath[1].total2 > total2 && ath[2].total3 > total3; // 100
+    const twoRiseATH = ath[0].total > total && ath[1].total2 < total2 && ath[2].total3 > total3; // 010
+    const threeRiseATH = ath[0].total > total && ath[1].total2 > total2 && ath[2].total3 < total3; // 001
+    const oneTwoRiseATH = ath[0].total < total && ath[1].total2 < total2 && ath[2].total3 > total3; // 110
+    const oneThreeRiseATH = ath[0].total < total && ath[1].total2 > total2 && ath[2].total3 < total3; // 101
+    const twoThreeRiseATH = ath[0].total > total && ath[1].total2 < total2 && ath[2].total3 < total3; // 011
     const testArr = [allRise, allFall, oneTwoRise, oneRise, twoRise, threeRise, oneThreeRise, twoThreeRise];
-    if (testArr.filter(Boolean).length !== 1) throw new Error("Invalid boolean logic! "+testArr);
-    if (allRise) {
-        ath = [{total, date}, {total2, date}, {total3, date}];
-        return ["📈", "📈", "📈"];
+    const testArr2 = [allRiseATH, allFallATH, oneTwoRiseATH, oneRiseATH, twoRiseATH, threeRiseATH, oneThreeRiseATH, twoThreeRiseATH];
+    if (testArr.filter(Boolean).length !== 1
+        || testArr2.filter(Boolean).length !== 1) throw new Error("Invalid boolean logic! "+testArr+" "+testArr2);
+
+    if (allRiseATH) ath = [{total, date}, {total2, date}, {total3, date}];
+    if (oneRiseATH) ath[0] = {total, date};
+    if (twoRiseATH) ath[1] = {total2, date};
+    if (threeRiseATH) ath[2] = {total3, date};
+    if (oneTwoRiseATH) {
+        ath[0] = {total, date};
+        ath[1] = {total2, date};
     }
+    if (oneThreeRiseATH) {
+        ath[0] = {total, date};
+        ath[2] = {total3, date};
+    }
+    if (twoThreeRiseATH) {
+        ath[1] = {total2, date};
+        ath[2] = {total3, date};
+    }
+    if (allRise) return ["📈", "📈", "📈"];
     if (allFall) return ["📉", "📉", "📉"];
-    if (oneRise) {
-        ath[0] = {total, date};
-        return ["📈", "📉", "📉"];
-    }
-    if (twoRise) {
-        ath[1] = {total2, date};
-        return ["📉", "📈", "📉"];
-    }
-    if (threeRise) {
-        ath[2] = {total3, date};
-        return ["📉", "📉", "📈"];
-    }
-    if (oneTwoRise) {
-        ath[0] = {total, date};
-        ath[1] = {total2, date};
-        return ["📈", "📈", "📉"];
-    }
-    if (oneThreeRise) {
-        ath[0] = {total, date};
-        ath[2] = {total3, date};
-        return ["📈", "📉", "📈"];
-    }
-    if (twoThreeRise) {
-        ath[1] = {total2, date};
-        ath[2] = {total3, date};
-        return ["📉", "📈", "📈"];
-    }
+    if (oneRise) return ["📈", "📉", "📉"];
+    if (twoRise) return ["📉", "📈", "📉"];
+    if (threeRise) return ["📉", "📉", "📈"];
+    if (oneTwoRise) return ["📈", "📈", "📉"];
+    if (oneThreeRise) return ["📈", "📉", "📈"];
+    if (twoThreeRise) return ["📉", "📈", "📈"];
 }
 
 /**
